@@ -11,6 +11,6 @@ namespace JiraProject.Business.Dtos
         public int Id { get; set; }
         public string Name { get; set; } = null!;
         public UserSummaryDto TeamLead { get; set; } = null!; // Sadece ID yerine liderin özet bilgisi
-        public List<UserSummaryDto> Members { get; set; } = new(); // Takım üyelerinin listesi
+        public List<UserSummaryDto> Members { get; set; }
     }
 }

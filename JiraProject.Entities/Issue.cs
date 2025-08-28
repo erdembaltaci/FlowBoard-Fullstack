@@ -1,18 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿
+using JiraProject.Entities.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace JiraProject.Entities
 {
-    // Önce yeni enum'ı tanımlayalım
-    public enum PriorityLevel
-    {
-        Lowest,
-        Low,
-        Medium,
-        High,
-        Highest
-    }
-
     public class Issue : BaseEntity
     {
         [Required]
@@ -22,24 +14,22 @@ namespace JiraProject.Entities
         [MaxLength(2000)]
         public string? Description { get; set; }
 
-        public TaskStatus Status { get; set; }
-        public PriorityLevel Priority { get; set; }
-
+        public Enums.TaskStatus Status { get; set; }
         public int Order { get; set; }
         public DateTime? DueDate { get; set; }
+        public int? EstimatedHours { get; set; }
 
-        // --- İLİŞKİLER ---
-
-        // Proje İlişkisi
+        // --- İlişkiler ---
         public int ProjectId { get; set; }
         public Project Project { get; set; } = null!;
 
-        // "Assignee" (Görevi Yapan) İlişkisi (Nullable)
         public int? AssigneeId { get; set; }
         public User? Assignee { get; set; }
 
-        // "Reporter" (Görevi Oluşturan) İlişkisi (Non-Nullable)
         public int ReporterId { get; set; }
         public User Reporter { get; set; } = null!;
+        
+        public DateTime? issueCompletedDateTime {get; set;}
     }
+
 }

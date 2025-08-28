@@ -1,5 +1,5 @@
 ﻿// Yer: JiraProject.Business/Dtos/IssueCreateDto.cs
-using JiraProject.Entities;
+using JiraProject.Entities.Enums;
 
 namespace JiraProject.Business.Dtos
 {
@@ -17,8 +17,8 @@ namespace JiraProject.Business.Dtos
         // İsteğe bağlı alanlar
         public string? Description { get; set; }
         public int? AssigneeId { get; set; }
-        public PriorityLevel Priority { get; set; }
-        public JiraProject.Entities.TaskStatus Status { get; set; }
+        public Entities.Enums.TaskStatus Status { get; set; }
         public DateTime? DueDate { get; set; }
+        public int? EstimatedHours { get; set; }
     }
 }

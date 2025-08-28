@@ -1,11 +1,6 @@
-﻿// Önce ilişkili veriler için küçük özet DTO'lar oluşturalım
-public class UserSummaryDto
-{
-    public int Id { get; set; }
-    public string FullName { get; set; } = null!;
-}
+﻿
+using JiraProject.Business.Dtos;
 
-// Sonra ana DTO'muzu bu özetlerle zenginleştirelim
 public class IssueDto
 {
     public int Id { get; set; }
@@ -20,4 +15,5 @@ public class IssueDto
     public string ProjectName { get; set; } = null!;
     public UserSummaryDto? Assignee { get; set; } // Atanan kişi bilgileri
     public UserSummaryDto Reporter { get; set; } = null!; // Oluşturan kişi bilgileri
+    public int? EstimatedHours { get; set; }
 }

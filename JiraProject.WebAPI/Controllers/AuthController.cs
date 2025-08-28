@@ -1,5 +1,6 @@
 ﻿using JiraProject.Business.Abstract;
 using JiraProject.Business.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -26,8 +27,8 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Yeni bir kullanıcı kaydı oluşturur.
     /// </summary>
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] UserCreateDto userCreateDto)
+    [HttpPost("user-register")]
+    public async Task<IActionResult> Register([FromForm] UserCreateDto userCreateDto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -39,7 +40,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Kullanıcı girişi yapar ve başarılı olursa JWT döner.
     /// </summary>
-    [HttpPost("login")]
+    [HttpPost("user-login")]
     public async Task<IActionResult> Login([FromBody] UserLoginDto userLoginDto)
     {
         // 1. Business katmanını kullanarak kullanıcıyı doğrula. Dönen sonuç BİR DTO'DUR.
@@ -55,6 +56,27 @@ public class AuthController : ControllerBase
 
         // 3. Oluşturulan token'ı kullanıcıya geri döndür.
         return Ok(new { token = token });
+    }
+
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    {
+        await _userService.RequestPasswordResetAsync(dto.Email);
+
+        // Güvenlik nedeniyle, e-posta bulunsa da bulunmasa da her zaman aynı mesajı dönüyoruz.
+        return Ok(new { message = "Eğer bu e-posta adresi sistemimizde kayıtlıysa, şifre sıfırlama linki gönderilmiştir." });
+    }
+
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        await _userService.ResetPasswordAsync(dto);
+
+        return Ok(new { message = "Şifreniz başarıyla güncellendi. Şimdi giriş yapabilirsiniz." });
     }
 
     // === Token Üreten Yardımcı Metot (Artık UserDto alıyor) ===
@@ -76,8 +98,8 @@ public class AuthController : ControllerBase
             Subject = new ClaimsIdentity(claims),
             Expires = expires,
             SigningCredentials = creds,
-            Issuer = _configuration["Jwt:Issuer"],     // <-- Buradaki okuma doğru mu?
-            Audience = _configuration["Jwt:Audience"]  // <-- Buradaki okuma doğru mu?
+            Issuer = _configuration["Jwt:Issuer"],    
+            Audience = _configuration["Jwt:Audience"]  
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();

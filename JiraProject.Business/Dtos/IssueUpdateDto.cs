@@ -1,4 +1,4 @@
-﻿using JiraProject.Entities;
+﻿using JiraProject.Entities.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,10 +17,9 @@ namespace JiraProject.Business.Dtos
         // İsteğe bağlı veya güncellenebilir alanlar
         public string? Description { get; set; }
         public int? AssigneeId { get; set; } // Atanan kişi değişebilir
-        public PriorityLevel Priority { get; set; }
-        public JiraProject.Entities.TaskStatus Status { get; set; }
+        public Entities.Enums.TaskStatus Status { get; set; }
         public DateTime? DueDate { get; set; }
 
-        // ProjectId burada YOK, çünkü görevin projesi değiştirilmez.
+        public int? EstimatedHours { get; set; }
     }
 }

@@ -1,13 +1,13 @@
-﻿// Yer: JiraProject.Business/Dtos/UserUpdateDto.cs
+﻿using Microsoft.AspNetCore.Http;
+
 namespace JiraProject.Business.Dtos
 {
     public class UserUpdateDto
     {
-        public string Username { get; set; } = null!;
+        public string FirstName { get; set; } = null!;
+        public string LastName { get; set; } = null!;
         public string Email { get; set; } = null!;
-
-        // Not: Şifre güncelleme gibi hassas işlemler genellikle
-        // kendi özel endpoint'leri ile yapılır (örn: /api/users/change-password),
-        // bu yüzden genel güncelleme DTO'sunda yer almaz. Bu daha güvenli bir yaklaşımdır.
+        public string Username { get; set; } = null!;
+        public IFormFile? ProfilePicture { get; set; }
     }
 }

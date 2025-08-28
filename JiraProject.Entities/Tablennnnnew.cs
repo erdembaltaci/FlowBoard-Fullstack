@@ -6,10 +6,7 @@ using System.Threading.Tasks;
 
 namespace JiraProject.Entities
 {
-    public enum UserRole
+    internal class Tablennnnnew
     {
-        Developer,      // Geliştirici
-        TeamLead,       // Takım Lideri
-        BusinessUser    // İş Birimi Kullanıcısı
     }
 }

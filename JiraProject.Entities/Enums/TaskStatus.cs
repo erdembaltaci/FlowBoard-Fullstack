@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace JiraProject.Entities
+namespace JiraProject.Entities.Enums
 {
     public enum TaskStatus
     {

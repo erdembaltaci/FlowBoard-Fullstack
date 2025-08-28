@@ -20,7 +20,7 @@ public class IssuesController : ControllerBase
     /// <summary>
     /// Belirtilen projeye ait tüm görevleri listeler.
     /// </summary>
-    [HttpGet("get-by-project-id/{projectId}")] // İSİMLENDİRİLDİ
+    [HttpGet("get-by-project-id/{projectId}")] 
     public async Task<IActionResult> GetIssuesByProject(int projectId)
     {
         var issues = await _issueService.GetIssuesByProjectIdAsync(projectId);
@@ -30,7 +30,7 @@ public class IssuesController : ControllerBase
     /// <summary>
     /// ID'si verilen tek bir görevi getirir.
     /// </summary>
-    [HttpGet("get-by-id/{id}")] // İSİMLENDİRİLDİ
+    [HttpGet("get-by-id/{id}")] 
     public async Task<IActionResult> GetIssueById(int id)
     {
         var issueDto = await _issueService.GetIssueByIdAsync(id);
@@ -40,7 +40,7 @@ public class IssuesController : ControllerBase
     /// <summary>
     /// Yeni bir görev oluşturur.
     /// </summary>
-    [HttpPost("create")] // İSİMLENDİRİLDİ
+    [HttpPost("create-issue")] 
     public async Task<IActionResult> CreateIssue([FromBody] IssueCreateDto createDto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -54,7 +54,7 @@ public class IssuesController : ControllerBase
     /// <summary>
     /// Mevcut bir görevin bilgilerini günceller.
     /// </summary>
-    [HttpPut("update/{id}")] // İSİMLENDİRİLDİ
+    [HttpPut("update-issue/{id}")] 
     public async Task<IActionResult> UpdateIssue(int id, [FromBody] IssueUpdateDto updateDto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -68,7 +68,7 @@ public class IssuesController : ControllerBase
     /// <summary>
     /// Bir görevin Kanban panosundaki yerini değiştirir.
     /// </summary>
-    [HttpPut("move/{id}")] // İSİMLENDİRİLDİ
+    [HttpPut("move-issue/{id}")] 
     public async Task<IActionResult> MoveIssue(int id, [FromBody] IssueMoveDto moveDto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -82,7 +82,7 @@ public class IssuesController : ControllerBase
     /// <summary>
     /// ID'si verilen bir görevi siler.
     /// </summary>
-    [HttpDelete("delete/{id}")] // İSİMLENDİRİLDİ
+    [HttpDelete("delete-issue/{id}")] // İSİMLENDİRİLDİ
     public async Task<IActionResult> DeleteIssue(int id)
     {
         var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -97,10 +97,18 @@ public class IssuesController : ControllerBase
     /// <remarks>
     /// Örnek istek: GET /api/issues/filter?status=ToDo&assigneeId=5
     /// </remarks>
-    [HttpGet("filter")]
+    [HttpGet("filter-issues")]
     public async Task<IActionResult> FilterIssues([FromQuery] IssueFilterDto filterDto)
     {
         var issues = await _issueService.FilterIssuesAsync(filterDto);
+        return Ok(issues);
+    }
+
+    
+    [HttpGet("get-by-team-id/{teamId}")] 
+    public async Task<IActionResult> GetIssuesByTeam(int teamId)
+    {
+        var issues = await _issueService.GetIssuesByTeamIdAsync(teamId);
         return Ok(issues);
     }
 }
