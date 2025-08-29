@@ -7,29 +7,39 @@ export const authService = {
      * @returns {Promise<any>}
      * Backend Endpoint: POST /api/auth/user-register
      */
-    register: (registerData) => {
+    registerWithFormData: (registerData) => {
         const formData = new FormData();
         
-        // Anahtarları backend'in beklediği PascalCase formatında manuel olarak ekliyoruz.
         formData.append('FirstName', registerData.firstName);
         formData.append('LastName', registerData.lastName);
         formData.append('Username', registerData.username);
         formData.append('Email', registerData.email);
         formData.append('Password', registerData.password);
 
-        // Eğer bir profil fotoğrafı seçilmişse, onu da ekle
         if (registerData.profilePicture) {
             formData.append('ProfilePicture', registerData.profilePicture);
         }
 
-        // API isteğini, içeriğin 'multipart/form-data' olduğunu belirterek gönderiyoruz.
-        return api.post('/auth/user-register', formData, {
+        return api.post('/auth/user-register-form', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
         });
     },
 
+    /**
+     * Yeni kullanıcı kaydı (JSON).
+     * Backend Endpoint: POST /api/auth/user-register-json
+     */
+    registerWithJson: (registerData) => {
+        return api.post('/auth/user-register-json', {
+            FirstName: registerData.firstName,
+            LastName: registerData.lastName,
+            Username: registerData.username,
+            Email: registerData.email,
+            Password: registerData.password
+        });
+    },
     /**
      * Kullanıcı girişi yapar ve JWT token'ı döner.
      * @param {object} loginDto - { email, password }
