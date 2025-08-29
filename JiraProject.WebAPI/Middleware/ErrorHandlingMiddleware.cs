@@ -29,7 +29,7 @@ namespace JiraProject.WebAPI.Middleware
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Bir hata yakalandı: {Message}", ex.Message);
+                _logger.LogError(ex, "Bir hata yakalandı: {Message}", ex.ToString());
                 await HandleExceptionAsync(context, ex);
             }
         }
