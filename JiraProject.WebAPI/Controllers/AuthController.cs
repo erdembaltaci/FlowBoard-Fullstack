@@ -26,14 +26,22 @@ public class AuthController : ControllerBase
 
     /// <summary>
     /// Yeni bir kullanıcı kaydı oluşturur.
+    /// Hem JSON (body) hem multipart/form-data destekler.
     /// </summary>
     [HttpPost("user-register")]
-    public async Task<IActionResult> Register([FromForm] UserCreateDto userCreateDto)
+    public async Task<IActionResult> Register(
+        [FromForm] UserCreateDto? formDto, 
+        [FromBody] UserCreateDto? bodyDto)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
+        var userCreateDto = formDto ?? bodyDto;
+
+        if (userCreateDto == null)
+            return BadRequest("Geçersiz istek. JSON veya form-data göndermelisiniz.");
+
+        if (!ModelState.IsValid) 
+            return BadRequest(ModelState);
 
         var createdUser = await _userService.CreateUserAsync(userCreateDto);
-        // Başarılı kayıt sonrası istersen token da verebilirsin veya sadece başarılı mesajı dönebilirsin.
         return Ok(createdUser);
     }
 
@@ -43,19 +51,13 @@ public class AuthController : ControllerBase
     [HttpPost("user-login")]
     public async Task<IActionResult> Login([FromBody] UserLoginDto userLoginDto)
     {
-        // 1. Business katmanını kullanarak kullanıcıyı doğrula. Dönen sonuç BİR DTO'DUR.
         var userDto = await _userService.LoginAsync(userLoginDto.Email, userLoginDto.Password);
 
         if (userDto == null)
-        {
             return Unauthorized("Geçersiz e-posta veya şifre.");
-        }
 
-        // 2. Kullanıcı doğruysa, DTO'yu kullanarak bir JWT Token oluştur.
         var token = GenerateJwtToken(userDto);
-
-        // 3. Oluşturulan token'ı kullanıcıya geri döndür.
-        return Ok(new { token = token });
+        return Ok(new { token });
     }
 
     [HttpPost("forgot-password")]
@@ -64,7 +66,6 @@ public class AuthController : ControllerBase
     {
         await _userService.RequestPasswordResetAsync(dto.Email);
 
-        // Güvenlik nedeniyle, e-posta bulunsa da bulunmasa da her zaman aynı mesajı dönüyoruz.
         return Ok(new { message = "Eğer bu e-posta adresi sistemimizde kayıtlıysa, şifre sıfırlama linki gönderilmiştir." });
     }
 
@@ -79,15 +80,15 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Şifreniz başarıyla güncellendi. Şimdi giriş yapabilirsiniz." });
     }
 
-    // === Token Üreten Yardımcı Metot (Artık UserDto alıyor) ===
+    // === Token Üreten Yardımcı Metot ===
     private string GenerateJwtToken(UserDto userDto)
     {
         var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.NameIdentifier, userDto.Id.ToString()),
-        new Claim(ClaimTypes.Name, userDto.Username),
-        new Claim(ClaimTypes.Role, userDto.Role)
-    };
+        {
+            new Claim(ClaimTypes.NameIdentifier, userDto.Id.ToString()),
+            new Claim(ClaimTypes.Name, userDto.Username),
+            new Claim(ClaimTypes.Role, userDto.Role)
+        };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -98,8 +99,8 @@ public class AuthController : ControllerBase
             Subject = new ClaimsIdentity(claims),
             Expires = expires,
             SigningCredentials = creds,
-            Issuer = _configuration["Jwt:Issuer"],    
-            Audience = _configuration["Jwt:Audience"]  
+            Issuer = _configuration["Jwt:Issuer"],
+            Audience = _configuration["Jwt:Audience"]
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();
