@@ -25,16 +25,9 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 // --- CORS ---
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
-
     options.AddPolicy("AllowNetlify", policy =>
     {
-        policy.WithOrigins("https://flowboardd.netlify.app")
+        policy.WithOrigins("https://flowboardd.netlify.app") // Netlify domainin tam hali
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
