@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -20,8 +19,10 @@ var builder = WebApplication.CreateBuilder(args);
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 builder.WebHost.UseUrls($"http://*:{port}");
 
+// --- Routing lowercase ---
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
+// --- CORS ---
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -39,14 +40,12 @@ builder.Services.AddCors(options =>
     });
 });
 
-app.UseCors("AllowNetlify");
-
+// --- Database ---
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<JiraProjectDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-
-// --- Bağımlılıkları Tanıtma ---
+// --- AutoMapper ---
 var mapperConfig = new MapperConfiguration(cfg =>
 {
     cfg.AddProfile(new MappingProfile());
@@ -54,6 +53,7 @@ var mapperConfig = new MapperConfiguration(cfg =>
 IMapper mapper = mapperConfig.CreateMapper();
 builder.Services.AddSingleton(mapper);
 
+// --- Dependency Injection ---
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
@@ -63,13 +63,13 @@ builder.Services.AddScoped<IUserService, UserManager>();
 builder.Services.AddScoped<ITeamService, TeamManager>();
 builder.Services.AddSingleton<FileStorageService>();
 
+// --- Controllers + Validation ---
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
 }).AddFluentValidation(config =>
 {
-    // Validator'larınızın bulunduğu Assembly'yi (projeyi) tarar
     config.RegisterValidatorsFromAssemblyContaining<UserCreateDtoValidator>();
 });
 
@@ -102,10 +102,11 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityRequirement(new OpenApiSecurityRequirement { /* ... */ });
 });
 
+// --- SMTP & Email ---
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
-
-// Email servisini DI konteynerine ekler.
 builder.Services.AddScoped<IEmailService, EmailService>();
+
+// --- Build ---
 var app = builder.Build();
 
 // --- HTTP Request Pipeline ---
@@ -117,14 +118,28 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// HTTPS → yönlendirme
 app.UseHttpsRedirection();
 
-// Statik dosyalar için TEK bir çağrı, doğru yerde
+// Statik dosyalar
 app.UseStaticFiles();
 
 app.UseRouting();
-app.UseCors("AllowAll");
+
+// Ortama göre CORS seçimi
+if (app.Environment.IsDevelopment())
+    app.UseCors("AllowAll");
+else
+    app.UseCors("AllowNetlify");
+
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Controller endpointleri
 app.MapControllers();
+
+// Basit test endpointi
+app.MapGet("/", () => "FlowBoard API is running 🚀");
+
+// Run
 app.Run();
