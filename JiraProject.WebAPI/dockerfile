@@ -5,6 +5,9 @@ WORKDIR /src
 # Projeyi kopyala ve restore et
 COPY *.sln .
 COPY JiraProject.WebAPI/*.csproj JiraProject.WebAPI/
+COPY JiraProject.Business/*.csproj JiraProject.Business/
+COPY JiraProject.DataAccess/*.csproj JiraProject.DataAccess/
+COPY JiraProject.Entities/*.csproj JiraProject.Entities/
 RUN dotnet restore
 
 # Tüm solution’u kopyala ve publish et
