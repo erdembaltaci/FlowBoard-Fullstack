@@ -24,24 +24,19 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        builder =>
-        {
-            builder.AllowAnyOrigin()
-                   .AllowAnyMethod()
-                   .AllowAnyHeader();
-        });
-});
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowNetlify",
-        policy =>
-        {
-            policy.WithOrigins("https://senin-frontend.netlify.app")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
+    options.AddPolicy("AllowNetlify", policy =>
+    {
+        policy.WithOrigins("https://senin-frontend.netlify.app")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
 });
 
 app.UseCors("AllowNetlify");
