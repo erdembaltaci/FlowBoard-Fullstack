@@ -32,7 +32,8 @@ builder.Services.AddCors(options =>
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<JiraProjectDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<JiraProjectDbContext>(options =>
+    options.UseNpgsql(connectionString));
 
 // --- Bağımlılıkları Tanıtma ---
 var mapperConfig = new MapperConfiguration(cfg =>
