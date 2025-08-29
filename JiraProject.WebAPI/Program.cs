@@ -33,9 +33,23 @@ builder.Services.AddCors(options =>
         });
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowNetlify",
+        policy =>
+        {
+            policy.WithOrigins("https://senin-frontend.netlify.app")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
+app.UseCors("AllowNetlify");
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<JiraProjectDbContext>(options =>
     options.UseNpgsql(connectionString));
+
 
 // --- Bağımlılıkları Tanıtma ---
 var mapperConfig = new MapperConfiguration(cfg =>
