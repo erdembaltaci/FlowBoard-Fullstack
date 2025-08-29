@@ -16,59 +16,65 @@ using System.Text;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Render kendi portunu verir
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 builder.WebHost.UseUrls($"http://*:{port}");
 
-// --- Routing lowercase ---
-builder.Services.AddRouting(options => options.LowercaseUrls = true);
+// --- Routing ---
+builder.Services.AddRouting(o => o.LowercaseUrls = true);
 
 // --- CORS ---
 builder.Services.AddCors(options =>
 {
-    // Lokal geliştirme için (AllowAll)
-    options.AddPolicy("AllowAll", policy =>
-    {
+    // Lokal geliştirme: her şeye izin
+    options.AddPolicy("DevCors", policy =>
         policy.AllowAnyOrigin()
               .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
+              .AllowAnyMethod());
 
-    // Netlify için production policy
-    options.AddPolicy("AllowNetlify", policy =>
-    {
-        policy.WithOrigins("https://flowboardd.netlify.app") // kendi netlify domainin
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
+    // Prod: Netlify ana domain + TÜM preview subdomain'ler
+    options.AddPolicy("FrontendCors", policy =>
+        policy
+            .SetIsOriginAllowed(origin =>
+            {
+                // *.netlify.app ve flowboardd.netlify.app
+                try
+                {
+                    var host = new Uri(origin).Host.ToLower();
+                    return host == "flowboardd.netlify.app" || host.EndsWith("netlify.app");
+                }
+                catch { return false; }
+            })
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            // Bearer token kullanıldığı için genelde cookie yok; gerekirse aç:
+            // .AllowCredentials()
+            );
 });
 
 // --- Database ---
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<JiraProjectDbContext>(options =>
 {
-    var env = builder.Environment.EnvironmentName;
-
-    if (env == "Development")
+    if (builder.Environment.IsDevelopment())
     {
-        options.UseSqlServer(connectionString);
+        // Local: SQL Server
+        var sqlConn = builder.Configuration.GetConnectionString("DefaultConnection");
+        options.UseSqlServer(sqlConn);
     }
     else
     {
-        var pgConnection = builder.Configuration.GetConnectionString("PostgresConnection");
-        options.UseNpgsql(pgConnection);
+        // Render: PostgreSQL
+        var pgConn = builder.Configuration.GetConnectionString("PostgresConnection");
+        options.UseNpgsql(pgConn);
     }
 });
 
 // --- AutoMapper ---
-var mapperConfig = new MapperConfiguration(cfg =>
-{
-    cfg.AddProfile(new MappingProfile());
-});
-IMapper mapper = mapperConfig.CreateMapper();
-builder.Services.AddSingleton(mapper);
+var mapperConfig = new MapperConfiguration(cfg => cfg.AddProfile(new MappingProfile()));
+builder.Services.AddSingleton(mapperConfig.CreateMapper());
 
-// --- Dependency Injection ---
+// --- DI ---
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IIssueService, IssueManager>();
@@ -78,21 +84,24 @@ builder.Services.AddScoped<ITeamService, TeamManager>();
 builder.Services.AddSingleton<FileStorageService>();
 
 // --- Controllers + Validation ---
-builder.Services.AddControllers().AddJsonOptions(options =>
-{
-    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-}).AddFluentValidation(config =>
-{
-    config.RegisterValidatorsFromAssemblyContaining<UserCreateDtoValidator>();
-});
+builder.Services.AddControllers()
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        o.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    })
+    .AddFluentValidation(cfg =>
+    {
+        cfg.RegisterValidatorsFromAssemblyContaining<UserCreateDtoValidator>();
+    });
 
-// --- Authentication & Authorization ---
-builder.Services.AddAuthentication(options =>
+// --- Auth ---
+builder.Services.AddAuthentication(o =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(o =>
+    o.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    o.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(o =>
 {
     o.TokenValidationParameters = new TokenValidationParameters
     {
@@ -112,44 +121,59 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "FlowBoard API", Version = "v1" });
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme { /* ... */ });
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement { /* ... */ });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Bearer {token}",
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+        {
+            new OpenApiSecurityScheme{ Reference = new OpenApiReference{ Type = ReferenceType.SecurityScheme, Id = "Bearer"} },
+            Array.Empty<string>()
+        }
+    });
 });
 
-// --- SMTP & Email ---
+// --- SMTP ---
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-// --- Build ---
 var app = builder.Build();
 
-// --- Middleware pipeline ---
-app.UseMiddleware<ErrorHandlingMiddleware>();
-
+// --- Swagger (dev) ---
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// --- Static files ---
 app.UseStaticFiles();
+
 app.UseRouting();
 
-// --- CORS (routing’den sonra, auth’tan önce) ---
+// --- CORS: routing'den SONRA, auth'tan ÖNCE ---
+// Önce CORS çalışsın ki hata durumlarında bile header eklensin
 if (app.Environment.IsDevelopment())
-{
-    app.UseCors("AllowAll");
-}
+    app.UseCors("DevCors");
 else
-{
-    app.UseCors("AllowNetlify");
-}
+    app.UseCors("FrontendCors");
+
+// --- Hata middleware'i (CORS'tan sonra!) ---
+app.UseMiddleware<ErrorHandlingMiddleware>();
+
+// Render TLS terminasyonu yapıyor; prod’da HTTPS redirect kapalı
+if (app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
+// Health check
 app.MapGet("/", () => "FlowBoard API is running 🚀");
 
 app.Run();
