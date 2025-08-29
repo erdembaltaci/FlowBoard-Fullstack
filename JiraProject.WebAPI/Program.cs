@@ -36,7 +36,22 @@ builder.Services.AddCors(options =>
 // --- Database ---
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<JiraProjectDbContext>(options =>
-    options.UseNpgsql(connectionString));
+{
+    var env = builder.Environment.EnvironmentName; // Development, Production
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+    if (env == "Development")
+    {
+        // Lokalde SQL Server
+        options.UseSqlServer(connectionString);
+    }
+    else
+    {
+        // Render’da PostgreSQL
+        var pgConnection = builder.Configuration.GetConnectionString("PostgresConnection");
+        options.UseNpgsql(pgConnection);
+    }
+});
 
 // --- AutoMapper ---
 var mapperConfig = new MapperConfiguration(cfg =>
