@@ -66,7 +66,12 @@ namespace JiraProject.WebAPI.Middleware
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)statusCode;
 
-            var result = JsonSerializer.Serialize(new { error = message });
+            var result = JsonSerializer.Serialize(new
+            {
+                error = message,
+                exception = exception.Message,
+                stackTrace = exception.StackTrace
+            });
             return context.Response.WriteAsync(result);
         }
     }
