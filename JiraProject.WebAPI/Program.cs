@@ -1,13 +1,13 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FluentValidation.AspNetCore;
 using JiraProject.Business.Abstract;
 using JiraProject.Business.Concrete;
 using JiraProject.Business.Dtos;
 using JiraProject.Business.Mappings;
-using JiraProject.Business.ValidationRules; // FluentValidation için
+using JiraProject.Business.ValidationRules;
 using JiraProject.DataAccess.Concrete;
 using JiraProject.DataAccess.Contexts;
-using JiraProject.WebAPI.Middleware; // ErrorHandlingMiddleware için
+using JiraProject.WebAPI.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -25,11 +25,21 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 // --- CORS ---
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowNetlify", policy =>
+    // Lokal geliştirme için (AllowAll)
+    options.AddPolicy("AllowAll", policy =>
     {
-        policy.WithOrigins("https://flowboardd.netlify.app") // Netlify domainin tam hali
+        policy.AllowAnyOrigin()
               .AllowAnyHeader()
               .AllowAnyMethod();
+    });
+
+    // Netlify için production policy
+    options.AddPolicy("AllowNetlify", policy =>
+    {
+        policy.WithOrigins("https://flowboardd.netlify.app") // kendi netlify domainin
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -37,17 +47,14 @@ builder.Services.AddCors(options =>
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<JiraProjectDbContext>(options =>
 {
-    var env = builder.Environment.EnvironmentName; // Development, Production
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    var env = builder.Environment.EnvironmentName;
 
     if (env == "Development")
     {
-        // Lokalde SQL Server
         options.UseSqlServer(connectionString);
     }
     else
     {
-        // Render’da PostgreSQL
         var pgConnection = builder.Configuration.GetConnectionString("PostgresConnection");
         options.UseNpgsql(pgConnection);
     }
@@ -64,7 +71,6 @@ builder.Services.AddSingleton(mapper);
 // --- Dependency Injection ---
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-
 builder.Services.AddScoped<IIssueService, IssueManager>();
 builder.Services.AddScoped<IProjectService, ProjectManager>();
 builder.Services.AddScoped<IUserService, UserManager>();
@@ -117,7 +123,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 // --- Build ---
 var app = builder.Build();
 
-// --- HTTP Request Pipeline ---
+// --- Middleware pipeline ---
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
@@ -127,34 +133,23 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// Statik dosyalar
 app.UseStaticFiles();
-
 app.UseRouting();
 
-// CORS (Routing’den sonra, Auth’tan önce)
+// --- CORS (routing’den sonra, auth’tan önce) ---
 if (app.Environment.IsDevelopment())
 {
-    app.UseCors(policy => policy
-        .AllowAnyOrigin()
-        .AllowAnyHeader()
-        .AllowAnyMethod());
+    app.UseCors("AllowAll");
 }
 else
 {
     app.UseCors("AllowNetlify");
 }
 
-// Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Controller endpointleri
 app.MapControllers();
 
-// Basit test endpointi
 app.MapGet("/", () => "FlowBoard API is running 🚀");
 
-// Run
 app.Run();
