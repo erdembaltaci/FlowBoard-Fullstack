@@ -10,6 +10,7 @@
 *.userosscache
 *.sln.docstates
 
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
@@ -365,3 +366,4 @@ FodyWeavers.xsd
 .env.local
 .env.development
 .env.production
+wwwroot/avatars/
