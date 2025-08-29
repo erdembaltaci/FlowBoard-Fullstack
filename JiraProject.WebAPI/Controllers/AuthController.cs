@@ -24,22 +24,27 @@ public class AuthController : ControllerBase
         _configuration = configuration;
     }
 
+    
+    
     /// <summary>
-    /// Yeni bir kullanıcı kaydı oluşturur.
-    /// Hem JSON (body) hem multipart/form-data destekler.
+    /// JSON ile kullanıcı kaydı (fotoğraf olmadan)
     /// </summary>
-    [HttpPost("user-register")]
-    public async Task<IActionResult> Register(
-        [FromForm] UserCreateDto? formDto, 
-        [FromBody] UserCreateDto? bodyDto)
+    [HttpPost("user-register-json")]
+    public async Task<IActionResult> RegisterJson([FromBody] UserCreateDto userCreateDto)
     {
-        var userCreateDto = formDto ?? bodyDto;
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        if (userCreateDto == null)
-            return BadRequest("Geçersiz istek. JSON veya form-data göndermelisiniz.");
+        var createdUser = await _userService.CreateUserAsync(userCreateDto);
+        return Ok(createdUser);
+    }
 
-        if (!ModelState.IsValid) 
-            return BadRequest(ModelState);
+    /// <summary>
+    /// Form-data ile kullanıcı kaydı (fotoğraf ile birlikte)
+    /// </summary>
+    [HttpPost("user-register-form")]
+    public async Task<IActionResult> RegisterForm([FromForm] UserCreateDto userCreateDto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
         var createdUser = await _userService.CreateUserAsync(userCreateDto);
         return Ok(createdUser);
