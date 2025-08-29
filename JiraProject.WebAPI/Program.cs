@@ -111,7 +111,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// HTTPS → yönlendirme
 app.UseHttpsRedirection();
 
 // Statik dosyalar
@@ -119,12 +118,20 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Ortama göre CORS seçimi
+// CORS (Routing’den sonra, Auth’tan önce)
 if (app.Environment.IsDevelopment())
-    app.UseCors("AllowAll");
+{
+    app.UseCors(policy => policy
+        .AllowAnyOrigin()
+        .AllowAnyHeader()
+        .AllowAnyMethod());
+}
 else
+{
     app.UseCors("AllowNetlify");
+}
 
+// Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
