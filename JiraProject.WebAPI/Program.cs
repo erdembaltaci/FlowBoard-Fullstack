@@ -34,7 +34,7 @@ builder.Services.AddCors(options =>
 
     options.AddPolicy("AllowNetlify", policy =>
     {
-        policy.WithOrigins("https://senin-frontend.netlify.app")
+        policy.WithOrigins("https://flowboardd.netlify.app")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
