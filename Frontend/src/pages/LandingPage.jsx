@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { BarChart, Bell, Settings, LayoutDashboard } from 'lucide-react';
 
-// Animasyon varyantları
+// Animasyon varyantları (Değişiklik yok)
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -29,7 +29,7 @@ const itemVariants = {
 };
 
 function LandingPage() {
-  // "Çok Yakında" bölümü için özellik listesi
+  // "Çok Yakında" bölümü için özellik listesi (Değişiklik yok)
   const upcomingFeatures = [
     {
       icon: <BarChart className="h-6 w-6 text-purple-400" />,
@@ -49,7 +49,8 @@ function LandingPage() {
   ];
 
   return (
-    <div className="w-full bg-slate-900 text-white overflow-x-hidden">
+    // DEĞİŞİKLİK 1: Yatay taşmayı engellemek için relative ve overflow-hidden eklendi.
+    <div className="relative w-full bg-slate-900 text-white overflow-hidden">
       {/* Arka Plan Efekti */}
       <div className="absolute top-0 left-0 w-full h-full -z-10">
         <div className="absolute top-0 -left-4 w-72 h-72 lg:w-[500px] lg:h-[500px] bg-purple-500 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-blob"></div>
@@ -65,8 +66,8 @@ function LandingPage() {
             <LayoutDashboard className="text-blue-400" />
             <span>FlowBoard</span>
           </Link>
-          <div className="flex items-center gap-6">
-            {/* YENİ EKLENEN LİNK */}
+          {/* DEĞİŞİKLİK 2: Menü, mobil cihazlarda gizlendi (hamburger menü alternatifi) */}
+          <div className="hidden md:flex items-center gap-6">
             <a href="mailto:flow.boardd@gmail.com" className="text-slate-300 hover:text-white transition-colors">
               Destek
             </a>
@@ -80,7 +81,8 @@ function LandingPage() {
         {/* Ana Karşılama (Hero) Bölümü */}
         <main className="container mx-auto mt-20 md:mt-32 px-4 text-center min-h-[70vh] flex flex-col justify-center items-center">
           <motion.div variants={containerVariants} initial="hidden" animate="visible">
-            <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
+            {/* DEĞİŞİKLİK 3: Başlık font boyutu mobil için daha uygun hale getirildi */}
+            <motion.h1 variants={itemVariants} className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
               Proje Yönetiminde Yeni Bir Dönem
             </motion.h1>
             <motion.p variants={itemVariants} className="mt-6 text-lg md:text-xl text-slate-400 max-w-2xl mx-auto">
@@ -94,7 +96,7 @@ function LandingPage() {
           </motion.div>
         </main>
 
-        {/* Çok Yakında Bölümü */}
+        {/* Çok Yakında Bölümü (Değişiklik yok, bu bölüm zaten mobil uyumlu) */}
         <section className="container mx-auto px-4 py-24">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }}>
             <h2 className="text-4xl font-bold text-center mb-4">Geliştirme Yol Haritamız</h2>
@@ -125,7 +127,7 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* Footer */}
+        {/* Footer (Değişiklik yok) */}
         <footer className="container mx-auto text-center py-8 border-t border-slate-800">
           <p className="text-slate-500">&copy; {new Date().getFullYear()} FlowBoard. Tüm hakları saklıdır.</p>
         </footer>
