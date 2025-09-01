@@ -22,12 +22,12 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        builder =>
+    options.AddPolicy("AllowFrontend",
+        policy =>
         {
-            builder.AllowAnyOrigin()
-                   .AllowAnyMethod()
-                   .AllowAnyHeader();
+            policy.WithOrigins("https://flowboardd.netlify.app")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
         });
 });
 
