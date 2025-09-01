@@ -42,7 +42,6 @@ function RegisterPage() {
             navigate('/workspace');
         } catch (err)
         {
-            // Backend'den gelen validasyon hatalarını daha güzel gösterelim
             const errorData = err.response?.data;
             if (errorData && errorData.errors) {
                 const errorMessages = Object.values(errorData.errors).flat();
@@ -61,7 +60,8 @@ function RegisterPage() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.5 }}
-                className="absolute top-5 left-5"
+                // DEĞİŞİKLİK BURADA: Butonun en üst katmanda olmasını sağlıyoruz.
+                className="absolute top-5 left-5 z-10"
             >
                 <Button asChild variant="ghost" className="text-slate-300 hover:text-white hover:bg-slate-800">
                     <Link to="/">
