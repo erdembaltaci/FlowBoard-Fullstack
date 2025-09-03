@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FluentValidation.AspNetCore;
 using JiraProject.Business.Abstract;
 using JiraProject.Business.Concrete;
@@ -20,12 +20,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
+// --- CORS (herkese izin verir) ---
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend",
+    options.AddPolicy("AllowAll",
         policy =>
         {
-            policy.WithOrigins("https://flowboardd.netlify.app")
+            policy.AllowAnyOrigin()
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
@@ -51,7 +52,6 @@ builder.Services.AddScoped<IProjectService, ProjectManager>();
 builder.Services.AddScoped<IUserService, UserManager>();
 builder.Services.AddScoped<ITeamService, TeamManager>();
 builder.Services.AddSingleton<FileStorageService>();
-
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
@@ -119,6 +119,7 @@ builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpS
 
 // Email servisini DI konteynerine ekler.
 builder.Services.AddScoped<IEmailService, EmailService>();
+
 var app = builder.Build();
 
 // --- HTTP Request Pipeline ---
@@ -136,8 +137,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-app.UseCors("AllowFrontend");
+app.UseCors("AllowAll"); // ← burada her şeye izin veren CORS aktif
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
 app.Run();
