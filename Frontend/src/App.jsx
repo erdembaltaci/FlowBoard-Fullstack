@@ -26,7 +26,14 @@ const MainLayout = () => (
   </div>
 );
 function App() {
-    const { user } = useAuth();
+    const { user , oading } = useAuth();
+    if (loading) {  
+      return (
+        <div className="min-h-screen w-full bg-slate-900 flex items-center justify-center">
+          <div className="text-white text-xl">Yükleniyor...</div>
+        </div>
+      );
+    }
     return (
         
             <Routes>
