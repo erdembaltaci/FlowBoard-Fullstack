@@ -4,10 +4,10 @@ using JiraProject.Business.Abstract;
 using JiraProject.Business.Concrete;
 using JiraProject.Business.Dtos;
 using JiraProject.Business.Mappings;
-using JiraProject.Business.ValidationRules; // FluentValidation için
+using JiraProject.Business.ValidationRules;
 using JiraProject.DataAccess.Concrete;
 using JiraProject.DataAccess.Contexts;
-using JiraProject.WebAPI.Middleware; // ErrorHandlingMiddleware için
+using JiraProject.WebAPI.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -36,7 +36,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<JiraProjectDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// --- Bağımlılıkları Tanıtma ---
+// --- AutoMapper ---
 var mapperConfig = new MapperConfiguration(cfg =>
 {
     cfg.AddProfile(new MappingProfile());
@@ -44,9 +44,9 @@ var mapperConfig = new MapperConfiguration(cfg =>
 IMapper mapper = mapperConfig.CreateMapper();
 builder.Services.AddSingleton(mapper);
 
+// --- Services ---
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-
 builder.Services.AddScoped<IIssueService, IssueManager>();
 builder.Services.AddScoped<IProjectService, ProjectManager>();
 builder.Services.AddScoped<IUserService, UserManager>();
@@ -59,7 +59,6 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
 }).AddFluentValidation(config =>
 {
-    // Validator'larınızın bulunduğu Assembly'yi (projeyi) tarar
     config.RegisterValidatorsFromAssemblyContaining<UserCreateDtoValidator>();
 });
 
@@ -116,13 +115,11 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
-
-// Email servisini DI konteynerine ekler.
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 
-// --- HTTP Request Pipeline ---
+// --- Middleware ---
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
@@ -131,15 +128,16 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// ❌ app.UseHttpsRedirection(); // kaldırdık çünkü Render SSL'i kendi yönetiyor
 
-// Statik dosyalar için TEK bir çağrı, doğru yerde
 app.UseStaticFiles();
-
 app.UseRouting();
-app.UseCors("AllowAll"); // ← burada her şeye izin veren CORS aktif
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
-app.Run();
+// --- Render için doğru port ---
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+app.Run($"http://0.0.0.0:{port}");
