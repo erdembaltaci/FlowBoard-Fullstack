@@ -20,6 +20,7 @@ namespace JiraProject.Business.Mappings
             // Not: Eğer UserDto'da Role gibi Enum'dan string'e dönüşüm varsa buraya eklenmeli.
             CreateMap<User, UserDto>()
                  .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString()));
+                 .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.AvatarUrl));
 
             // 2. User -> UserSummaryDto (Özet bilgi için -> TeamLead, Member, Assignee vb.)
             // Bu kural, tüm belirsizlikleri ortadan kaldırmak için her alanı açıkça belirtir.
@@ -29,6 +30,7 @@ namespace JiraProject.Business.Mappings
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"));
             CreateMap<User, UserProfileDto>()
                 .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString()));
+                .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.AvatarUrl));
 
             CreateMap<Issue, DashboardTaskDto>()
                 .ForMember(dest => dest.ProjectName, opt => opt.MapFrom(src => src.Project.Name));
