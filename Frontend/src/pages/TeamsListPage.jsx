@@ -11,6 +11,7 @@ import { ArrowLeft, Plus, Users2, Crown, MoreHorizontal, Edit, Trash2 } from 'lu
 import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { fileUrl } from "../lib/fileUrl";
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants = { hidden: { opacity: 0, scale: 0.95, y: 20 }, visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } } };
@@ -174,7 +175,7 @@ function TeamsListPage() {
                                                 {team.members.slice(0, 5).map(member => (
                                                     <Avatar key={member.id} className="h-8 w-8 border-2 border-slate-900 -ml-2 first:ml-0">
                                                         {member.avatarUrl ? (
-                                                            <AvatarImage src={`${API_URL}${member.avatarUrl}`} alt={member.fullName} />
+                                                            <AvatarImage src={fileUrl(member.avatarUrl)} alt={member.fullName} />
                                                         ) : (
                                                             <AvatarFallback className="bg-slate-700 text-xs">
                                                                 {member.fullName?.charAt(0).toUpperCase() || '?'}
