@@ -187,7 +187,7 @@ function IssueBoardPage() {
                             className={`flex items-center gap-2 rounded-full transition-colors ${selectedAssigneeId === m.id ? 'bg-slate-200 text-slate-900 hover:bg-slate-300' : 'bg-transparent text-slate-300 hover:bg-slate-700 hover:text-white'}`}
                         >
                             <Avatar className="h-6 w-6">
-                                {m.avatarUrl ? ( <AvatarImage src={fileUrl(member.avatarUrl)} alt={member.fullName} />) : (<AvatarFallback className="text-xs bg-slate-700 text-white">{m.fullName?.charAt(0).toUpperCase() || '?'}</AvatarFallback>)}
+                                {m.avatarUrl ? ( <AvatarImage src={fileUrl(user.avatarUrl)} alt={user.fullName} />) : (<AvatarFallback className="text-xs bg-slate-700 text-white">{m.fullName?.charAt(0).toUpperCase() || '?'}</AvatarFallback>)}
                             </Avatar>
                             <span className="text-xs sm:text-sm">{m.fullName || m.email}</span>
                         </Button>
