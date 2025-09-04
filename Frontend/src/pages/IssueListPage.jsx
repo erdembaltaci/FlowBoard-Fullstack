@@ -34,7 +34,7 @@ function IssueListPage() {
     const members = project?.team?.members || [];
 
     const loadData = useCallback(async () => {
-        setLoading(true); // Veri çekme başladığında yükleniyor durumunu başlat
+        setLoading(true);
         try {
             const [projectRes, issuesRes] = await Promise.all([
                 projectService.getProjectById(projectId),
@@ -45,7 +45,7 @@ function IssueListPage() {
         } catch (err) {
             toast.error('Proje veya görevler yüklenirken hata oluştu.');
         } finally {
-            setLoading(false); // İşlem bitince veya hata alınca yükleniyor durumunu bitir
+            setLoading(false);
         }
     }, [projectId, searchTerm]);
 
@@ -69,7 +69,6 @@ function IssueListPage() {
         }
     };
     
-    // Sadece sayfa ilk açıldığında tam ekran yükleme göster
     if (loading && issues.length === 0) {
         return <div className="p-8 text-center text-slate-400">Görevler Yükleniyor...</div>;
     }
@@ -114,7 +113,13 @@ function IssueListPage() {
                             className="flex items-center gap-2 rounded-full bg-transparent border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
                             title={`${m.fullName} kullanıcısının görev panosuna git`}
                         >
-                            <Avatar className="h-6 w-6"><AvatarImage src={fileUrl(user.avatarUrl)} alt={user.fullName} /><AvatarFallback>{m.fullName?.charAt(0)}</AvatarFallback></Avatar>
+                            <Avatar className="h-6 w-6">
+                              {m.avatarUrl ? (
+                                <AvatarImage src={fileUrl(m.avatarUrl)} alt={m.fullName} />
+                              ) : (
+                                <AvatarFallback>{m.fullName?.charAt(0)}</AvatarFallback>
+                              )}
+                            </Avatar>
                             {m.fullName || m.email}
                         </Button>
                     ))}
@@ -143,7 +148,6 @@ function IssueListPage() {
                         <div className="col-span-3 text-right">Durum</div>
                     </div>
                     
-                    {/* DÜZELTME BURADA */}
                     <div className={`transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
                         {issues.length > 0 ? (
                             <motion.ul variants={containerVariants} initial="hidden" animate="visible" className="divide-y divide-slate-700">
@@ -162,7 +166,7 @@ function IssueListPage() {
                                                 >
                                                     <Avatar className="h-6 w-6">
                                                         {issue.assignee.avatarUrl ? (
-                                                            <AvatarImage src={`https://localhost:7233${issue.assignee.avatarUrl}`} alt={issue.assignee.fullName} />
+                                                            <AvatarImage src={fileUrl(issue.assignee.avatarUrl)} alt={issue.assignee.fullName} />
                                                         ) : (
                                                             <AvatarFallback className="text-xs bg-slate-700">{issue.assignee.fullName?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
                                                         )}
