@@ -172,18 +172,21 @@ function TeamsListPage() {
                                         <div className="mt-4">
                                             <p className="text-sm text-slate-500 mb-2">{team.members.length} üye</p>
                                             <div className="flex items-center">
-                                                {team.members.slice(0, 5).map(member => (
-                                                    console.log("Avatar URL:", fileUrl(member.avatarUrl));
-                                                    <Avatar key={member.id} className="h-8 w-8 border-2 border-slate-900 -ml-2 first:ml-0">
-                                                        {member.avatarUrl ? (
-                                                            <AvatarImage src={fileUrl(member.avatarUrl)} alt={member.fullName} />
-                                                        ) : (
-                                                            <AvatarFallback className="bg-slate-700 text-xs">
-                                                                {member.fullName?.charAt(0).toUpperCase() || '?'}
-                                                            </AvatarFallback>
-                                                        )}
-                                                    </Avatar>
-                                                ))}
+                                                {team.members.slice(0, 5).map(member => {
+                                                    console.log("Avatar URL:", fileUrl(member.avatarUrl)); // ✅ debug log
+
+                                                    return (
+                                                        <Avatar key={member.id} className="h-8 w-8 border-2 border-slate-900 -ml-2 first:ml-0">
+                                                            {member.avatarUrl ? (
+                                                                <AvatarImage src={fileUrl(member.avatarUrl)} alt={member.fullName} />
+                                                            ) : (
+                                                                <AvatarFallback className="bg-slate-700 text-xs">
+                                                                    {member.fullName?.charAt(0).toUpperCase() || "?"}
+                                                                </AvatarFallback>
+                                                            )}
+                                                        </Avatar>
+                                                    );
+                                                })}
                                                 {team.members.length > 5 && (
                                                      <div className="h-8 w-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-semibold border-2 border-slate-900 -ml-2">
                                                         +{team.members.length - 5}
