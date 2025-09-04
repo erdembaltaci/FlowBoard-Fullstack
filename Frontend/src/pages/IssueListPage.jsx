@@ -11,6 +11,7 @@ import { ArrowLeft, Plus, Search, UserCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 import IssueModal from '../components/IssueModal';
+import { fileUrl } from "../lib/fileUrl";
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { ease: "easeOut" } } };
@@ -113,7 +114,7 @@ function IssueListPage() {
                             className="flex items-center gap-2 rounded-full bg-transparent border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
                             title={`${m.fullName} kullanıcısının görev panosuna git`}
                         >
-                            <Avatar className="h-6 w-6"><AvatarImage src={`https://localhost:7233${m.avatarUrl}`} /><AvatarFallback>{m.fullName?.charAt(0)}</AvatarFallback></Avatar>
+                            <Avatar className="h-6 w-6"><AvatarImage src={fileUrl(member.avatarUrl)} alt={member.fullName} /><AvatarFallback>{m.fullName?.charAt(0)}</AvatarFallback></Avatar>
                             {m.fullName || m.email}
                         </Button>
                     ))}
