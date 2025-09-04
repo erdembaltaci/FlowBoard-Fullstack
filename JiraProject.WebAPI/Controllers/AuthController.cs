@@ -96,6 +96,7 @@ public class AuthController : ControllerBase
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
+            NotBefore = now,
             Expires = expires,
             SigningCredentials = creds,
             Issuer = _configuration["Jwt:Issuer"],    
