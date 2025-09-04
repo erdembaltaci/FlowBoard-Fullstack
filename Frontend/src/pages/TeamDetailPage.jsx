@@ -13,6 +13,7 @@ import ConfirmationDialog from '../components/ConfirmationDialog';
 import { ArrowLeft, UserPlus, Search, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { fileUrl } from "../lib/fileUrl";
 
 // Animasyon varyantları
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
@@ -184,7 +185,7 @@ function TeamDetailPage() {
                                     <div className="flex items-center gap-4">
                                         <Avatar className="h-10 w-10">
                                             {member.avatarUrl ? (
-                                                <AvatarImage src={`https://localhost:7233${member.avatarUrl}`} alt={member.fullName} />
+                                                <AvatarImage src={fileUrl(member.avatarUrl)} alt={member.fullName} />
                                             ) : (
                                                 <AvatarFallback className="bg-slate-700">
                                                     {member.fullName?.charAt(0).toUpperCase() || member.username?.charAt(0).toUpperCase() || '?'}
