@@ -185,7 +185,7 @@ function TeamDetailPage() {
                                     <div className="flex items-center gap-4">
                                         <Avatar className="h-10 w-10">
                                             {member.avatarUrl ? (
-                                                <AvatarImage src={fileUrl(member.avatarUrl)} alt={member.fullName} />
+                                                <AvatarImage src={fileUrl(user.avatarUrl)} alt={user.fullName} />
                                             ) : (
                                                 <AvatarFallback className="bg-slate-700">
                                                     {member.fullName?.charAt(0).toUpperCase() || member.username?.charAt(0).toUpperCase() || '?'}
