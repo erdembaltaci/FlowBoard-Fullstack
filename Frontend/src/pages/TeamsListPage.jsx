@@ -175,7 +175,7 @@ function TeamsListPage() {
                                                 {team.members.slice(0, 5).map(member => (
                                                     <Avatar key={member.id} className="h-8 w-8 border-2 border-slate-900 -ml-2 first:ml-0">
                                                         {member.avatarUrl ? (
-                                                            <AvatarImage src={fileUrl(user.avatarUrl)} alt={user.fullName} />
+                                                            <AvatarImage src={fileUrl(member.avatarUrl)} alt={member.fullName} />
                                                         ) : (
                                                             <AvatarFallback className="bg-slate-700 text-xs">
                                                                 {member.fullName?.charAt(0).toUpperCase() || '?'}
