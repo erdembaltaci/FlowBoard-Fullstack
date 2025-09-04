@@ -102,7 +102,7 @@ function ProfilePage() {
                         <CardHeader className="p-0 flex flex-col items-center text-center">
                              <div className="relative w-32 h-32 mx-auto group">
                                 <Avatar className="w-32 h-32 text-4xl border-2 border-slate-600">
-                                    <AvatarImage src={fileUrl(member.avatarUrl)} alt={member.fullName} />
+                                    <AvatarImage src={fileUrl(user.avatarUrl)} alt={user.fullName} />
                                     <AvatarFallback className="bg-slate-700">
                                         {profile.firstName?.charAt(0)}{profile.lastName?.charAt(0)}
                                     </AvatarFallback>
