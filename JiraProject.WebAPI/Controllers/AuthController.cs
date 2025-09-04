@@ -33,17 +33,19 @@ public class AuthController : ControllerBase
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
         var createdUser = await _userService.CreateUserAsync(userCreateDto);
-        // Başarılı kayıt sonrası istersen token da verebilirsin veya sadece başarılı mesajı dönebilirsin.
+
+        if (!string.IsNullOrEmpty(createdUser.AvatarUrl))
+        {
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            createdUser.AvatarUrl = $"{baseUrl}{createdUser.AvatarUrl}";
+        }
+
         return Ok(createdUser);
     }
 
-    /// <summary>
-    /// Kullanıcı girişi yapar ve başarılı olursa JWT döner.
-    /// </summary>
     [HttpPost("user-login")]
     public async Task<IActionResult> Login([FromBody] UserLoginDto userLoginDto)
     {
-        // 1. Business katmanını kullanarak kullanıcıyı doğrula. Dönen sonuç BİR DTO'DUR.
         var userDto = await _userService.LoginAsync(userLoginDto.Email, userLoginDto.Password);
 
         if (userDto == null)
@@ -51,12 +53,17 @@ public class AuthController : ControllerBase
             return Unauthorized("Geçersiz e-posta veya şifre.");
         }
 
-        // 2. Kullanıcı doğruysa, DTO'yu kullanarak bir JWT Token oluştur.
+        if (!string.IsNullOrEmpty(userDto.AvatarUrl))
+        {
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            userDto.AvatarUrl = $"{baseUrl}{userDto.AvatarUrl}";
+        }
+
         var token = GenerateJwtToken(userDto);
 
-        // 3. Oluşturulan token'ı kullanıcıya geri döndür.
-        return Ok(new { token = token });
+        return Ok(new { token, user = userDto });
     }
+
 
     [HttpPost("forgot-password")]
     [AllowAnonymous]
