@@ -187,7 +187,7 @@ function IssueBoardPage() {
                             className={`flex items-center gap-2 rounded-full transition-colors ${selectedAssigneeId === m.id ? 'bg-slate-200 text-slate-900 hover:bg-slate-300' : 'bg-transparent text-slate-300 hover:bg-slate-700 hover:text-white'}`}
                         >
                             <Avatar className="h-6 w-6">
-                                {m.avatarUrl ? ( <AvatarImage src={fileUrl(user.avatarUrl)} alt={user.fullName} />) : (<AvatarFallback className="text-xs bg-slate-700 text-white">{m.fullName?.charAt(0).toUpperCase() || '?'}</AvatarFallback>)}
+                                {m.avatarUrl ? ( <AvatarImage src={fileUrl(m.avatarUrl)} alt={m.fullName} />) : (<AvatarFallback className="text-xs bg-slate-700 text-white">{m.fullName?.charAt(0).toUpperCase() || '?'}</AvatarFallback>)}
                             </Avatar>
                             <span className="text-xs sm:text-sm">{m.fullName || m.email}</span>
                         </Button>
@@ -235,7 +235,7 @@ function IssueBoardPage() {
                                                                         {issue.assignee ? (
                                                                             <Avatar className="h-5 w-5 sm:h-6 sm:w-6" title={`Atanan: ${issue.assignee.fullName || ''}`}>
                                                                                 {issue.assignee.avatarUrl ? (
-                                                                                    <AvatarImage src={`https://localhost:7233${issue.assignee.avatarUrl}`} alt={issue.assignee.fullName} />
+                                                                                    <AvatarImage src={fileUrl(issue.assignee.avatarUrl)} alt={issue.assignee.fullName} />
                                                                                 ) : (
                                                                                     <AvatarFallback className="text-xs bg-slate-700">{issue.assignee.fullName?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
                                                                                 )}
