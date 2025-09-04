@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { fileUrl } from "../lib/fileUrl";
 
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" }}};
 
@@ -101,7 +102,7 @@ function ProfilePage() {
                         <CardHeader className="p-0 flex flex-col items-center text-center">
                              <div className="relative w-32 h-32 mx-auto group">
                                 <Avatar className="w-32 h-32 text-4xl border-2 border-slate-600">
-                                    <AvatarImage src={previewUrl} alt={profile.fullName} className="object-cover" />
+                                    <AvatarImage src={fileUrl(member.avatarUrl)} alt={member.fullName} />
                                     <AvatarFallback className="bg-slate-700">
                                         {profile.firstName?.charAt(0)}{profile.lastName?.charAt(0)}
                                     </AvatarFallback>
