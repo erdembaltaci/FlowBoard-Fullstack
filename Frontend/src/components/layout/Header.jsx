@@ -59,7 +59,7 @@ function Header() {
                             <button className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-500 rounded-full p-1 transition-all">
                                 <Avatar className="h-8 w-8">
                                     {user && user.avatarUrl ? (
-                                        <AvatarImage src={fileUrl(member.avatarUrl)} alt={member.fullName} />
+                                        <AvatarImage src={fileUrl(user.avatarUrl)} alt={user.fullName || user.username} />
                                     ) : (
                                         <AvatarFallback className="bg-blue-600 text-white text-xs font-bold">
                                             {user?.fullName?.charAt(0).toUpperCase() || user?.username?.charAt(0).toUpperCase()}
