@@ -12,7 +12,7 @@ import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { fileUrl } from "../lib/fileUrl";
 
-const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" }}};
+const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }};
 
 function ProfilePage() {
     const { user, refreshUser } = useAuth();
@@ -30,7 +30,7 @@ function ProfilePage() {
                 const res = await userService.getMyProfile();
                 setProfile(res.data);
                 if (res.data.avatarUrl) {
-                    setPreviewUrl(`https://localhost:7233${res.data.avatarUrl}`);
+                    setPreviewUrl(fileUrl(res.data.avatarUrl));
                 }
             } catch {
                 toast.error("Profil bilgileri yüklenemedi.");
@@ -43,7 +43,7 @@ function ProfilePage() {
         const file = e.target.files[0];
         if (file) {
             setProfilePicture(file);
-            setPreviewUrl(URL.createObjectURL(file));
+            setPreviewUrl(URL.createObjectURL(file)); // geçici preview
         }
     };
     
@@ -102,12 +102,20 @@ function ProfilePage() {
                         <CardHeader className="p-0 flex flex-col items-center text-center">
                              <div className="relative w-32 h-32 mx-auto group">
                                 <Avatar className="w-32 h-32 text-4xl border-2 border-slate-600">
-                                    <AvatarImage src={fileUrl(user.avatarUrl)} alt={user.fullName} />
-                                    <AvatarFallback className="bg-slate-700">
-                                        {profile.firstName?.charAt(0)}{profile.lastName?.charAt(0)}
-                                    </AvatarFallback>
+                                    {previewUrl ? (
+                                        <AvatarImage src={previewUrl} alt={profile.firstName} />
+                                    ) : profile.avatarUrl ? (
+                                        <AvatarImage src={fileUrl(profile.avatarUrl)} alt={profile.firstName} />
+                                    ) : (
+                                        <AvatarFallback className="bg-slate-700">
+                                            {profile.firstName?.charAt(0)}{profile.lastName?.charAt(0)}
+                                        </AvatarFallback>
+                                    )}
                                 </Avatar>
-                                <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer" onClick={() => fileInputRef.current.click()}>
+                                <div 
+                                    className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer" 
+                                    onClick={() => fileInputRef.current.click()}
+                                >
                                     <Camera className="h-8 w-8 text-white" />
                                 </div>
                             </div>
