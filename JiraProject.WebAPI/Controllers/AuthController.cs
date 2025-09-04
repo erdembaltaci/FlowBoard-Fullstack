@@ -89,6 +89,7 @@ public class AuthController : ControllerBase
         new Claim(ClaimTypes.Role, userDto.Role ?? string.Empty)
     };
 
+        var now = DateTime.UtcNow;
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var expires = DateTime.Now.AddDays(Convert.ToDouble(_configuration["Jwt:ExpireDays"]));
