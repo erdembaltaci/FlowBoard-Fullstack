@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LayoutDashboard, LogOut, Menu, User, X, LifeBuoy } from 'lucide-react'; // LifeBuoy ikonu eklendi
 import { motion } from 'framer-motion';
-import { fileUrl } from "../lib/fileUrl";
+import { fileUrl } from "../../lib/fileUrl";
 
 function Header() {
     const { user, logout } = useAuth();
