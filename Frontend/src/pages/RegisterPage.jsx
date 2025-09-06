@@ -8,15 +8,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { motion } from 'framer-motion';
-import { ArrowLeft, File } from 'lucide-react';
+import { ArrowLeft, File, Eye, EyeOff } from 'lucide-react';
 
 function RegisterPage() {
-    const [formData, setFormData] = useState({ username: '', email: '', password: '', firstName: '', lastName: '' });
+    const [formData, setFormData] = useState({
+        firstName: '',
+        lastName: '',
+        username: '',
+        email: '',
+        password: '',
+    });
     const [profilePicture, setProfilePicture] = useState(null);
     const [fileName, setFileName] = useState('');
-    const navigate = useNavigate();
-    const { login } = useAuth(); // Artık bu, main.jsx'teki gerçek AuthProvider'dan gelecek.
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const navigate = useNavigate();
+    const { login } = useAuth();
     const fileInputRef = useRef(null);
 
     const handleChange = (e) => {
@@ -35,21 +42,17 @@ function RegisterPage() {
         e.preventDefault();
         setIsLoading(true);
         try {
-            // 1. ADIM: Kullanıcıyı resimsiz olarak kaydet.
             await authService.register(formData);
             
-            // 2. ADIM: Kayıt başarılı olduğu için, aynı bilgilerle giriş yap ve token al.
             const loginResponse = await authService.login({ email: formData.email, password: formData.password });
             const { token } = loginResponse.data;
 
-            // 3. ADIM: Eğer kullanıcı bir resim seçtiyse, alınan token ile avatarı yükle.
             if (profilePicture && token) {
                 await authService.uploadAvatar(profilePicture, token);
             }
 
-            // 4. ADIM: Tüm işlemler bittikten sonra AuthContext'i güncelle ve yönlendir.
             toast.success("Kayıt başarılı! Yönlendiriliyorsunuz...");
-            await login(token); // AuthContext'i güncelle (login artık async olabilir)
+            await login(token);
             navigate('/workspace');
 
         } catch (err) {
@@ -96,25 +99,51 @@ function RegisterPage() {
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleRegister} className="space-y-4">
-                            {/* ... (Formun JSX kısmı aynı kalabilir) ... */}
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2"><Label htmlFor="firstName">Ad</Label><Input id="firstName" name="firstName" value={formData.firstName} onChange={handleChange} required /></div>
-                                <div className="space-y-2"><Label htmlFor="lastName">Soyad</Label><Input id="lastName" name="lastName" value={formData.lastName} onChange={handleChange} required /></div>
-                            </div>
-                            <div className="space-y-2"><Label htmlFor="username">Kullanıcı Adı</Label><Input id="username" name="username" value={formData.username} onChange={handleChange} required /></div>
-                            <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required /></div>
-                            <div className="space-y-2"><Label htmlFor="password">Şifre</Label><Input id="password" name="password" type="password" value={formData.password} onChange={handleChange} required /></div>
-                            <div className="space-y-2">
-                                <Label htmlFor="profilePicture">Profil Fotoğrafı (Opsiyonel)</Label>
-                                <div className="flex items-center gap-4">
-                                    <Input id="profilePicture" name="profilePicture" type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg" />
-                                    <Button type="button" variant="outline" onClick={() => fileInputRef.current.click()}> <File size={16} className="mr-2" /> Dosya Seç </Button>
-                                    <span className="text-sm text-slate-500 truncate">{fileName || "Dosya seçilmedi"}</span>
+                                <div className="space-y-2">
+                                    <Label htmlFor="firstName" className="text-slate-400">Ad</Label>
+                                    <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="lastName" className="text-slate-400">Soyad</Label>
+                                    <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500" />
                                 </div>
                             </div>
-                            <Button type="submit" className="w-full !mt-6" disabled={isLoading}>{isLoading ? 'Kaydediliyor...' : 'Hesabımı Oluştur'}</Button>
+                            <div className="space-y-2">
+                                <Label htmlFor="username" className="text-slate-400">Kullanıcı Adı</Label>
+                                <Input id="username" name="username" value={formData.username} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="email" className="text-slate-400">Email</Label>
+                                <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500" />
+                            </div>
+                            <div className="space-y-2 relative">
+                                <Label htmlFor="password" className="text-slate-400">Şifre</Label>
+                                <Input id="password" name="password" type={showPassword ? "text" : "password"} minLength={8} value={formData.password} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500 pr-10" />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-9 text-slate-400 hover:text-white">
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="profilePicture" className="text-slate-400">Profil Fotoğrafı (Opsiyonel)</Label>
+                                <div className="flex items-center gap-4">
+                                    <Input id="profilePicture" name="profilePicture" type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg" />
+                                    <Button type="button" variant="outline" onClick={() => fileInputRef.current.click()} className="bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600 hover:text-white">
+                                        <File size={16} className="mr-2" />
+                                        Dosya Seç
+                                    </Button>
+                                    <span className="text-sm text-slate-500 truncate">
+                                        {fileName || "Dosya seçilmedi"}
+                                    </span>
+                                </div>
+                            </div>
+                            <Button type="submit" className="w-full !mt-6 bg-blue-600 hover:bg-blue-500 text-white text-md shadow-lg shadow-blue-500/30 transition-all duration-300 hover:shadow-md hover:shadow-blue-500/40" disabled={isLoading}>
+                                {isLoading ? 'Hesap Oluşturuluyor...' : 'Hesabımı Oluştur'}
+                            </Button>
                         </form>
-                        <p className="mt-6 text-center text-sm">Zaten bir hesabın var mı? <Link to="/login" className="font-medium text-blue-400 hover:underline">Giriş Yap</Link></p>
+                        <p className="mt-6 text-center text-sm text-slate-400">
+                            Zaten bir hesabın var mı? <Link to="/login" className="font-medium text-blue-400 hover:text-blue-300 hover:underline">Giriş Yap</Link>
+                        </p>
                     </CardContent>
                 </Card>
             </motion.div>
