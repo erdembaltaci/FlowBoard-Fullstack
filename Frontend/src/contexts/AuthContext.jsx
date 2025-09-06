@@ -18,7 +18,6 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true); // En başta oturum kontrolü için yükleniyor
 
     useEffect(() => {
-        // Uygulama ilk açıldığında veya sayfa yenilendiğinde çalışır
         const initializeAuth = async () => {
             try {
                 const token = localStorage.getItem('authToken');
@@ -27,12 +26,10 @@ export const AuthProvider = ({ children }) => {
                     const currentTime = Date.now() / 1000;
 
                     if (decodedToken.exp > currentTime) {
-                        // Token geçerli, API'dan en güncel kullanıcı bilgisini al
                         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                         const response = await userService.getMyProfile();
                         setUser(response.data);
                     } else {
-                        // Token süresi dolmuş
                         localStorage.removeItem('authToken');
                     }
                 }
@@ -41,7 +38,6 @@ export const AuthProvider = ({ children }) => {
                 localStorage.removeItem('authToken');
                 setUser(null);
             } finally {
-                // Kontrol işlemi bitti, yükleme durumunu kapat
                 setLoading(false);
             }
         };
