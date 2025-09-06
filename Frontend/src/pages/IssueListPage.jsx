@@ -141,7 +141,6 @@ function IssueListPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    {/* BAŞLIK: Bu başlık sırası artık mobilde gizli */}
                     <div className="hidden sm:grid grid-cols-12 gap-4 px-4 py-2 border-b border-slate-700 font-semibold text-sm text-slate-400">
                         <div className="col-span-6">Görev</div>
                         <div className="col-span-3">Atanan Kişi</div>
@@ -152,16 +151,21 @@ function IssueListPage() {
                         {issues.length > 0 ? (
                             <motion.ul variants={containerVariants} initial="hidden" animate="visible" className="divide-y divide-slate-700">
                                 {issues.map(issue => (
-                                    // LİSTE ELEMANI: Mobilde flex-col, geniş ekranda grid olarak davranır
-                                    <motion.li key={issue.id} variants={itemVariants} className="flex flex-col sm:grid sm:grid-cols-12 gap-y-3 sm:gap-4 px-4 py-4 items-start sm:items-center">
-                                        {/* Görev */}
-                                        <div className="sm:col-span-6 flex flex-col w-full">
+                                    // LİSTE ELEMANI: Mobil için flex-row, masaüstü için grid olarak güncellendi
+                                    <motion.li 
+                                        key={issue.id} 
+                                        variants={itemVariants} 
+                                        className="flex flex-wrap justify-between items-center sm:grid sm:grid-cols-12 sm:gap-4 px-4 py-4"
+                                    >
+                                        {/* Görev (Sol Taraf) */}
+                                        <div className="sm:col-span-6 flex flex-col">
                                             <span className="font-medium text-slate-100">{issue.title}</span>
                                             <span className="text-xs text-slate-500">ID-{issue.id}</span>
                                         </div>
 
-                                        {/* SARMALAYICI: Atanan ve Durum'u mobilde aynı satırda tutar, masaüstünde kaybolur */}
-                                        <div className="flex flex-row sm:contents items-center justify-between w-full">
+                                        {/* Atanan ve Durum için yeni bir sağ hizalı sarmalayıcı. sm:contents ile masaüstü grid yapısını korur */}
+                                        <div className="flex flex-col items-end gap-2 sm:contents">
+                                            
                                             {/* Atanan kişi */}
                                             <div className="sm:col-span-3 flex items-center gap-2">
                                                 {issue.assignee ? (
@@ -177,18 +181,18 @@ function IssueListPage() {
                                                                 <AvatarFallback className="text-xs bg-slate-700">{issue.assignee.fullName?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
                                                             )}
                                                         </Avatar>
-                                                        <span className="text-sm text-slate-300 truncate">{issue.assignee.fullName}</span>
+                                                        <span className="hidden sm:inline text-sm text-slate-300 truncate">{issue.assignee.fullName}</span>
                                                     </button>
                                                 ) : (
                                                     <div className="flex items-center gap-2 p-1">
                                                         <UserCircle size={24} className="text-slate-600" />
-                                                        <span className="text-sm text-slate-500">Atanmamış</span>
+                                                        <span className="hidden sm:inline text-sm text-slate-500">Atanmamış</span>
                                                     </div>
                                                 )}
                                             </div>
 
                                             {/* Durum */}
-                                            <div className="sm:col-span-3 flex items-center sm:justify-end">
+                                            <div className="sm:col-span-3 flex sm:justify-end">
                                                 <Badge
                                                     variant={statusStyles[issue.status]?.variant}
                                                     className={statusStyles[issue.status]?.className}
@@ -196,6 +200,7 @@ function IssueListPage() {
                                                     {statusStyles[issue.status]?.label || issue.status}
                                                 </Badge>
                                             </div>
+                                            
                                         </div>
                                     </motion.li>
                                 ))}
