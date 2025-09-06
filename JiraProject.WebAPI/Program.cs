@@ -15,7 +15,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using System.Text.Json.Serialization;
-using CloudinarySettings.cs;
 
 var builder = WebApplication.CreateBuilder(args);
 
