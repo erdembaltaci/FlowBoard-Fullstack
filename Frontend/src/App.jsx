@@ -52,7 +52,7 @@ function App() {
       fetch("https://flowboard-backend.onrender.com/health") 
         .then((res) => console.log("Sunucuya ping gönderildi:", res.status))
         .catch((err) => console.error("Sunucuya ping gönderilemedi:", err));
-    }, 6 * 60 * 1000); // Render'ın ücretsiz servisleri için 14 dakikada bir idealdir.
+    }, 14 * 60 * 1000); // Render'ın ücretsiz servisleri için 14 dakikada bir idealdir.
 
     return () => clearInterval(interval);
   }, []);
