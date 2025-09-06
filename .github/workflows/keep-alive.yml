@@ -1,0 +1,16 @@
+name: Keep Alive
+
+on:
+  schedule:
+    - cron: "*/1 * * * *" # her dakika çalışır
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Loop 2 Times (30s aralıkla)
+        run: |
+          curl -s https://flowboard-fullstack.onrender.com || true
+          sleep 30
+          curl -s https://flowboard-fullstack.onrender.com || true
