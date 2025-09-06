@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
-// DEĞİŞİKLİK: 'BrowserRouter as Router' ve 'AuthProvider' import'ları kaldırıldı.
-import { Routes, Route, Navigate, Outlet } from "react-router-dom"; 
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Header from "./components/layout/Header";
@@ -24,7 +23,7 @@ const MainLayout = () => (
   <div className="min-h-screen w-full bg-slate-900">
     <Header />
     <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Outlet /> 
+      <Outlet />
     </main>
   </div>
 );
@@ -38,15 +37,12 @@ const PublicRoute = ({ children }) => {
     return isAuthenticated ? <Navigate to="/workspace" /> : children;
 };
 
-
-// DEĞİŞİKLİK: Artık 'AppRoutes' diye bir ara bileşene gerek yok.
-// 'App' bileşeni doğrudan yönlendirme mantığını döndürüyor.
 function App() {
   // Sunucuyu canlı tutmak için periyodik istek (ping)
   useEffect(() => {
     const interval = setInterval(() => {
       // ÖNEMLİ: Bu URL'yi kendi Render backend adresinizle değiştirmeyi unutmayın!
-      fetch("https://flowboard-backend.onrender.com/health") 
+      fetch("https://flowboard-backend.onrender.com/health")
         .then((res) => console.log("Sunucuya ping gönderildi:", res.status))
         .catch((err) => console.error("Sunucuya ping gönderilemedi:", err));
     }, 14 * 60 * 1000); // Render'ın ücretsiz servisleri için 14 dakikada bir idealdir.
@@ -86,5 +82,4 @@ function App() {
   );
 }
 
-// DEĞİŞİKLİK: Dışarıya sarmalayıcı değil, doğrudan App bileşeni ihraç ediliyor.
 export default App;
