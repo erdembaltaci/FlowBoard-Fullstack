@@ -18,6 +18,8 @@ import ProfilePage from "./pages/ProfilePage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 
+// --- YARDIMCI BİLEŞENLER ---
+
 // Header gibi ortak bileşenleri içeren ana layout
 const MainLayout = () => (
   <div className="min-h-screen w-full bg-slate-900">
@@ -28,15 +30,19 @@ const MainLayout = () => (
   </div>
 );
 
-// Giriş yapmış kullanıcıların login gibi sayfalara gitmesini engelleyen yardımcı bileşen
+// Giriş yapmış kullanıcıların login, register gibi sayfalara gitmesini engelleyen rota
 const PublicRoute = ({ children }) => {
     const { isAuthenticated, loading } = useAuth();
     if (loading) {
+        // Oturum kontrol edilirken bir yüklenme ekranı gösterilir
         return <div className="min-h-screen w-full bg-slate-900 flex items-center justify-center text-white">Yükleniyor...</div>;
     }
+    // Eğer kullanıcı giriş yapmışsa, onu ana çalışma alanına yönlendir
     return isAuthenticated ? <Navigate to="/workspace" /> : children;
 };
 
+
+// --- ANA YÖNLENDİRME BİLEŞENİ ---
 
 function AppRoutes() {
   // Sunucuyu canlı tutmak için periyodik istek (ping)
@@ -83,7 +89,10 @@ function AppRoutes() {
   );
 }
 
-// Ana App bileşeni AuthProvider'ı sarmalar
+
+// --- UYGULAMANIN BAŞLANGIÇ NOKTASI ---
+
+// Ana App bileşeni, tüm uygulamayı Router ve AuthProvider ile sarmalar
 function App() {
   return (
     <Router>
@@ -95,3 +104,4 @@ function App() {
 }
 
 export default App;
+
