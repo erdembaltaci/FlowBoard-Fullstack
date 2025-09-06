@@ -20,5 +20,6 @@ namespace JiraProject.Business.Abstract
         Task<IEnumerable<T>> FindWithIncludesAsync(Expression<Func<T, bool>> predicate, params string[] includeStrings);
         Task<int> CountAsync(Expression<Func<T, bool>> predicate);
         void Delete(T entity);
+        void Remove(T entity);
     }
 }
