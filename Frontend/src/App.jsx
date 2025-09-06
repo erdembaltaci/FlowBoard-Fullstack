@@ -25,7 +25,7 @@ const MainLayout = () => (
   <div className="min-h-screen w-full bg-slate-900">
     <Header />
     <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Outlet /> 
+      <Outlet />
     </main>
   </div>
 );
@@ -49,7 +49,7 @@ function App() {
   useEffect(() => {
     const interval = setInterval(() => {
       // ÖNEMLİ: Bu URL'yi kendi Render backend adresinizle değiştirmeyi unutmayın!
-      fetch("https://flowboard-backend.onrender.com/health") 
+      fetch("https://flowboard-backend.onrender.com/health")
         .then((res) => console.log("Sunucuya ping gönderildi:", res.status))
         .catch((err) => console.error("Sunucuya ping gönderilemedi:", err));
     }, 14 * 60 * 1000); // Render'ın ücretsiz servisleri için 14 dakikada bir idealdir.
