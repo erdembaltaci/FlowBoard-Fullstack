@@ -224,7 +224,8 @@ namespace JiraProject.Business.Concrete
             if (user != null)
             {
                 user.AvatarUrl = avatarUrl;
-                await _userRepository.UpdateAsync(user);
+                _userRepository.Update(user); 
+                await _unitOfWork.CommitAsync(); 
             }
         
         }
