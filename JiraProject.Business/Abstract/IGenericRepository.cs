@@ -15,7 +15,6 @@ namespace JiraProject.Business.Abstract
         Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
         Task AddAsync(T entity);
         void Update(T entity);
-        void Remove(T entity);
         Task<T?> GetByIdWithIncludesAsync(int id, params string[] includeStrings);
         IQueryable<T> GetQueryableWithIncludes(params string[] includeStrings);
         Task<IEnumerable<T>> FindWithIncludesAsync(Expression<Func<T, bool>> predicate, params string[] includeStrings);
