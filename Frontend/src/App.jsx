@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+// DEĞİŞİKLİK: 'BrowserRouter as Router' ve 'AuthProvider' import'ları kaldırıldı.
+import { Routes, Route, Navigate, Outlet } from "react-router-dom"; 
+import { useAuth } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Header from "./components/layout/Header";
 
@@ -18,8 +19,6 @@ import ProfilePage from "./pages/ProfilePage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 
-// --- YARDIMCI BİLEŞENLER ---
-
 // Header gibi ortak bileşenleri içeren ana layout
 const MainLayout = () => (
   <div className="min-h-screen w-full bg-slate-900">
@@ -30,21 +29,19 @@ const MainLayout = () => (
   </div>
 );
 
-// Giriş yapmış kullanıcıların login, register gibi sayfalara gitmesini engelleyen rota
+// Giriş yapmış kullanıcıların login gibi sayfalara gitmesini engelleyen yardımcı bileşen
 const PublicRoute = ({ children }) => {
     const { isAuthenticated, loading } = useAuth();
     if (loading) {
-        // Oturum kontrol edilirken bir yüklenme ekranı gösterilir
         return <div className="min-h-screen w-full bg-slate-900 flex items-center justify-center text-white">Yükleniyor...</div>;
     }
-    // Eğer kullanıcı giriş yapmışsa, onu ana çalışma alanına yönlendir
     return isAuthenticated ? <Navigate to="/workspace" /> : children;
 };
 
 
-// --- ANA YÖNLENDİRME BİLEŞENİ ---
-
-function AppRoutes() {
+// DEĞİŞİKLİK: Artık 'AppRoutes' diye bir ara bileşene gerek yok.
+// 'App' bileşeni doğrudan yönlendirme mantığını döndürüyor.
+function App() {
   // Sunucuyu canlı tutmak için periyodik istek (ping)
   useEffect(() => {
     const interval = setInterval(() => {
@@ -89,19 +86,5 @@ function AppRoutes() {
   );
 }
 
-
-// --- UYGULAMANIN BAŞLANGIÇ NOKTASI ---
-
-// Ana App bileşeni, tüm uygulamayı Router ve AuthProvider ile sarmalar
-function App() {
-  return (
-    <Router>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </Router>
-  );
-}
-
+// DEĞİŞİKLİK: Dışarıya sarmalayıcı değil, doğrudan App bileşeni ihraç ediliyor.
 export default App;
-
