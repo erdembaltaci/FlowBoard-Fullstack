@@ -22,7 +22,7 @@ namespace JiraProject.Business.Concrete
         private readonly IMapper _mapper;
         private readonly FileStorageService _fileStorageService;
         private readonly IEmailService _emailService;
-        private readonly IConfiguration _configuration; // Eklendi
+        private readonly IConfiguration _configuration;
 
         public UserManager(
             IGenericRepository<User> userRepository,
@@ -32,7 +32,7 @@ namespace JiraProject.Business.Concrete
             IMapper mapper,
             FileStorageService fileStorageService,
             IEmailService emailService,
-            IConfiguration configuration) // Eklendi
+            IConfiguration configuration)
         {
             _userRepository = userRepository;
             _issueRepository = issueRepository;
@@ -41,7 +41,7 @@ namespace JiraProject.Business.Concrete
             _mapper = mapper;
             _fileStorageService = fileStorageService;
             _emailService = emailService;
-            _configuration = configuration; // Ata
+            _configuration = configuration;
         }
 
         public async Task<UserDto> CreateUserAsync(UserCreateDto dto)
@@ -162,9 +162,9 @@ namespace JiraProject.Business.Concrete
             var allMyProjects = await _projectRepository.FindAsync(p => !p.IsDeleted && p.Team.UserTeams.Any(ut => ut.UserId == userId));
             return new DashboardStatsDto
             {
-                AssignedTasksCount = allMyIssues.Count(i => i.Status != TaskStatus.Done),
-                DueSoonTasksCount = allMyIssues.Count(i => i.Status != TaskStatus.Done && i.DueDate.HasValue && i.DueDate.Value <= DateTime.UtcNow.AddDays(7)),
-                CompletedTasksCount = allMyIssues.Count(i => i.Status == TaskStatus.Done),
+                AssignedTasksCount = allMyIssues.Count(i => i.Status != JiraProject.Entities.Enums.TaskStatus.Done),
+                DueSoonTasksCount = allMyIssues.Count(i => i.Status != JiraProject.Entities.Enums.TaskStatus.Done && i.DueDate.HasValue && i.DueDate.Value <= DateTime.UtcNow.AddDays(7)),
+                CompletedTasksCount = allMyIssues.Count(i => i.Status == JiraProject.Entities.Enums.TaskStatus.Done),
                 ProjectsCount = allMyProjects.Count()
             };
         }
@@ -172,7 +172,7 @@ namespace JiraProject.Business.Concrete
         public async Task<IEnumerable<DashboardTaskDto>> GetMyOpenTasksAsync(int userId)
         {
             var issues = await _issueRepository.FindWithIncludesAsync(
-                predicate: i => !i.IsDeleted && i.AssigneeId == userId && i.Status != TaskStatus.Done,
+                predicate: i => !i.IsDeleted && i.AssigneeId == userId && i.Status != JiraProject.Entities.Enums.TaskStatus.Done,
                 includeStrings: new[] { "Project" }
             );
             var recentIssues = issues.OrderByDescending(i => i.CreatedAt).Take(5);
@@ -193,7 +193,6 @@ namespace JiraProject.Business.Concrete
             user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
             await _unitOfWork.CompleteAsync();
 
-            // FRONTEND URL environment variable
             var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
             var resetLink = $"{frontendUrl}/reset-password?token={user.PasswordResetToken}";
 
