@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
@@ -6,63 +6,45 @@ import { toast } from 'react-toastify';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { motion } from 'framer-motion';
-import { ArrowLeft, File, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
-function RegisterPage() {
-    const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        username: '',
-        email: '',
-        password: '',
-    });
-    const [profilePicture, setProfilePicture] = useState(null);
-    const [fileName, setFileName] = useState('');
+function LoginPage() {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
+    const [showPassword, setShowPassword] = useState(false); // 👈 şifreyi göster/gizle state
     const navigate = useNavigate();
     const { login } = useAuth();
-    const fileInputRef = useRef(null);
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setProfilePicture(file);
-            setFileName(file.name);
+    useEffect(() => {
+        const rememberedEmail = localStorage.getItem('rememberedEmail');
+        if (rememberedEmail) {
+            setEmail(rememberedEmail);
+            setRememberMe(true);
         }
-    };
+    }, []);
 
-    const handleRegister = async (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            await authService.register(formData);
-            
-            const loginResponse = await authService.login({ email: formData.email, password: formData.password });
-            const { token } = loginResponse.data;
+            const response = await authService.login({ email, password });
+            login(response.data.token);
 
-            if (profilePicture && token) {
-                await authService.uploadAvatar(profilePicture, token);
-            }
-
-            toast.success("Kayıt başarılı! Yönlendiriliyorsunuz...");
-            await login(token);
-            navigate('/workspace');
-
-        } catch (err) {
-            const errorData = err.response?.data;
-            if (errorData && errorData.errors) {
-                const errorMessages = Object.values(errorData.errors).flat();
-                toast.error(errorMessages.join('\n'));
+            if (rememberMe) {
+                localStorage.setItem('rememberedEmail', email);
             } else {
-                toast.error(errorData?.error || errorData?.message || "Kayıt başarısız oldu. Lütfen bilgilerinizi kontrol edin.");
+                localStorage.removeItem('rememberedEmail');
             }
+
+            toast.success("Başarıyla giriş yapıldı!");
+            navigate('/workspace');
+        } catch (err) {
+            toast.error('Geçersiz e-posta veya şifre.');
         } finally {
             setIsLoading(false);
         }
@@ -74,7 +56,7 @@ function RegisterPage() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.5 }}
-                className="absolute top-5 left-5 z-10"
+                className="absolute top-5 left-5"
             >
                 <Button asChild variant="ghost" className="text-slate-300 hover:text-white hover:bg-slate-800">
                     <Link to="/">
@@ -82,67 +64,71 @@ function RegisterPage() {
                     </Link>
                 </Button>
             </motion.div>
-
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-            >
+            
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                 <Card className="w-full max-w-md bg-slate-800/50 border-slate-700 backdrop-blur-sm">
                     <CardHeader className="text-center">
                         <CardTitle className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">
-                            FlowBoard'a Katılın
+                            Tekrar Hoş Geldin!
                         </CardTitle>
                         <CardDescription className="text-slate-400 pt-1">
-                            Verimliliğin yeni dünyasına ilk adımı atın.
+                            Proje yönetimine kaldığın yerden devam et.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleRegister} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="firstName" className="text-slate-400">Ad</Label>
-                                    <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="lastName" className="text-slate-400">Soyad</Label>
-                                    <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500" />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="username" className="text-slate-400">Kullanıcı Adı</Label>
-                                <Input id="username" name="username" value={formData.username} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500" />
-                            </div>
+                        <form onSubmit={handleLogin} className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="email" className="text-slate-400">Email</Label>
-                                <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500" />
+                                <Input 
+                                    id="email" 
+                                    type="email" 
+                                    placeholder="ornek@sirket.com" 
+                                    value={email} 
+                                    onChange={(e) => setEmail(e.target.value)} 
+                                    required 
+                                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500"
+                                />
                             </div>
                             <div className="space-y-2 relative">
                                 <Label htmlFor="password" className="text-slate-400">Şifre</Label>
-                                <Input id="password" name="password" type={showPassword ? "text" : "password"} minLength={8} value={formData.password} onChange={handleChange} required className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500 pr-10" />
-                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-9 text-slate-400 hover:text-white">
+                                <Input 
+                                    id="password" 
+                                    type={showPassword ? "text" : "password"} // 👈 şifreyi göster/gizle
+                                    value={password} 
+                                    onChange={(e) => setPassword(e.target.value)} 
+                                    required 
+                                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500 pr-10"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-9 text-slate-400 hover:text-white"
+                                >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="profilePicture" className="text-slate-400">Profil Fotoğrafı (Opsiyonel)</Label>
-                                <div className="flex items-center gap-4">
-                                    <Input id="profilePicture" name="profilePicture" type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg" />
-                                    <Button type="button" variant="outline" onClick={() => fileInputRef.current.click()} className="bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600 hover:text-white">
-                                        <File size={16} className="mr-2" />
-                                        Dosya Seç
-                                    </Button>
-                                    <span className="text-sm text-slate-500 truncate">
-                                        {fileName || "Dosya seçilmedi"}
-                                    </span>
+                            <div className="flex items-center justify-between pt-2">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox 
+                                        id="remember-me" 
+                                        checked={rememberMe}
+                                        onCheckedChange={setRememberMe}
+                                        className="border-slate-600 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                                    />
+                                    <Label htmlFor="remember-me" className="text-sm font-medium text-slate-400 leading-none cursor-pointer">
+                                        Beni Hatırla
+                                    </Label>
                                 </div>
+                                <Link to="/forgot-password" className="text-sm text-blue-400 hover:underline">
+                                    Şifremi unuttum
+                                </Link>
                             </div>
                             <Button type="submit" className="w-full !mt-6 bg-blue-600 hover:bg-blue-500 text-white text-md shadow-lg shadow-blue-500/30 transition-all duration-300 hover:shadow-md hover:shadow-blue-500/40" disabled={isLoading}>
-                                {isLoading ? 'Hesap Oluşturuluyor...' : 'Hesabımı Oluştur'}
+                                {isLoading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
                             </Button>
                         </form>
                         <p className="mt-6 text-center text-sm text-slate-400">
-                            Zaten bir hesabın var mı? <Link to="/login" className="font-medium text-blue-400 hover:text-blue-300 hover:underline">Giriş Yap</Link>
+                            Hesabın yok mu? <Link to="/register" className="font-medium text-blue-400 hover:text-blue-300 hover:underline">Ücretsiz Kayıt Ol</Link>
                         </p>
                     </CardContent>
                 </Card>
@@ -151,5 +137,4 @@ function RegisterPage() {
     );
 }
 
-export default RegisterPage;
-
+export default LoginPage;
