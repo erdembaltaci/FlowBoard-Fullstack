@@ -16,10 +16,10 @@ import { fileUrl } from "../lib/fileUrl";
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { ease: "easeOut" } } };
 const statusStyles = {
-  ToDo: { variant: "outline", className: "border-blue-500/50 text-blue-400", label: "Yapılacak" },
-  InProgress: { variant: "secondary", className: "bg-amber-500/20 text-amber-400 border-amber-500/30", label: "Geliştiriliyor" },
-  InReview: { variant: "secondary", className: "bg-purple-500/20 text-purple-400 border-purple-500/30", label: "İnceleniyor" },
-  Done: { variant: "secondary", className: "bg-green-500/20 text-green-400 border-green-500/30", label: "Tamamlandı" },
+    ToDo: { variant: "outline", className: "border-blue-500/50 text-blue-400", label: "Yapılacak" },
+    InProgress: { variant: "secondary", className: "bg-amber-500/20 text-amber-400 border-amber-500/30", label: "Geliştiriliyor" },
+    InReview: { variant: "secondary", className: "bg-purple-500/20 text-purple-400 border-purple-500/30", label: "İnceleniyor" },
+    Done: { variant: "secondary", className: "bg-green-500/20 text-green-400 border-green-500/30", label: "Tamamlandı" },
 };
 
 function IssueListPage() {
@@ -113,11 +113,11 @@ function IssueListPage() {
                             title={`${m.fullName} kullanıcısının görev panosuna git`}
                         >
                             <Avatar className="h-6 w-6">
-                              {m.avatarUrl ? (
-                                <AvatarImage src={fileUrl(m.avatarUrl)} alt={m.fullName} />
-                              ) : (
-                                <AvatarFallback>{m.fullName?.charAt(0)}</AvatarFallback>
-                              )}
+                                {m.avatarUrl ? (
+                                    <AvatarImage src={fileUrl(m.avatarUrl)} alt={m.fullName} />
+                                ) : (
+                                    <AvatarFallback>{m.fullName?.charAt(0)}</AvatarFallback>
+                                )}
                             </Avatar>
                             {m.fullName || m.email}
                         </Button>
@@ -141,7 +141,8 @@ function IssueListPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-12 gap-4 px-4 py-2 border-b border-slate-700 font-semibold text-sm text-slate-400">
+                    {/* BAŞLIK: Bu başlık sırası artık mobilde gizli */}
+                    <div className="hidden sm:grid grid-cols-12 gap-4 px-4 py-2 border-b border-slate-700 font-semibold text-sm text-slate-400">
                         <div className="col-span-6">Görev</div>
                         <div className="col-span-3">Atanan Kişi</div>
                         <div className="col-span-3 text-right">Durum</div>
@@ -151,46 +152,50 @@ function IssueListPage() {
                         {issues.length > 0 ? (
                             <motion.ul variants={containerVariants} initial="hidden" animate="visible" className="divide-y divide-slate-700">
                                 {issues.map(issue => (
-                                    <motion.li key={issue.id} variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-12 gap-4 px-4 py-3 items-start">
+                                    // LİSTE ELEMANI: Mobilde flex-col, geniş ekranda grid olarak davranır
+                                    <motion.li key={issue.id} variants={itemVariants} className="flex flex-col sm:grid sm:grid-cols-12 gap-y-3 sm:gap-4 px-4 py-4 items-start sm:items-center">
                                         {/* Görev */}
-                                        <div className="col-span-6 flex flex-col">
+                                        <div className="sm:col-span-6 flex flex-col w-full">
                                             <span className="font-medium text-slate-100">{issue.title}</span>
                                             <span className="text-xs text-slate-500">ID-{issue.id}</span>
                                         </div>
 
-                                        {/* Atanan kişi */}
-                                        <div className="col-span-6 sm:col-span-3 flex items-center gap-2">
-                                            {issue.assignee ? (
-                                                <button
-                                                    onClick={() => navigate(`/project/${projectId}/board?assigneeId=${issue.assignee.id}`)}
-                                                    className="flex items-center gap-2 rounded-md p-1 hover:bg-slate-700 transition-colors w-full sm:w-auto text-left"
-                                                    title={`${issue.assignee.fullName} kullanıcısının panosuna git`}
-                                                >
-                                                    <Avatar className="h-6 w-6">
-                                                        {issue.assignee.avatarUrl ? (
-                                                            <AvatarImage src={fileUrl(issue.assignee.avatarUrl)} alt={issue.assignee.fullName} />
-                                                        ) : (
-                                                            <AvatarFallback className="text-xs bg-slate-700">{issue.assignee.fullName?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
-                                                        )}
-                                                    </Avatar>
-                                                    <span className="text-sm text-slate-300 truncate">{issue.assignee.fullName}</span>
-                                                </button>
-                                            ) : (
-                                                <div className="flex items-center gap-2 p-1">
-                                                    <UserCircle size={24} className="text-slate-600" />
-                                                    <span className="text-sm text-slate-500">Atanmamış</span>
-                                                </div>
-                                            )}
-                                        </div>
+                                        {/* SARMALAYICI: Atanan ve Durum'u mobilde aynı satırda tutar, masaüstünde kaybolur */}
+                                        <div className="flex flex-row sm:contents items-center justify-between w-full">
+                                            {/* Atanan kişi */}
+                                            <div className="sm:col-span-3 flex items-center gap-2">
+                                                {issue.assignee ? (
+                                                    <button
+                                                        onClick={() => navigate(`/project/${projectId}/board?assigneeId=${issue.assignee.id}`)}
+                                                        className="flex items-center gap-2 rounded-md p-1 hover:bg-slate-700 transition-colors text-left"
+                                                        title={`${issue.assignee.fullName} kullanıcısının panosuna git`}
+                                                    >
+                                                        <Avatar className="h-6 w-6">
+                                                            {issue.assignee.avatarUrl ? (
+                                                                <AvatarImage src={fileUrl(issue.assignee.avatarUrl)} alt={issue.assignee.fullName} />
+                                                            ) : (
+                                                                <AvatarFallback className="text-xs bg-slate-700">{issue.assignee.fullName?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
+                                                            )}
+                                                        </Avatar>
+                                                        <span className="text-sm text-slate-300 truncate">{issue.assignee.fullName}</span>
+                                                    </button>
+                                                ) : (
+                                                    <div className="flex items-center gap-2 p-1">
+                                                        <UserCircle size={24} className="text-slate-600" />
+                                                        <span className="text-sm text-slate-500">Atanmamış</span>
+                                                    </div>
+                                                )}
+                                            </div>
 
-                                        {/* Durum */}
-                                        <div className="col-span-6 sm:col-span-3 sm:flex sm:justify-end mt-2 sm:mt-0">
-                                            <Badge
-                                                variant={statusStyles[issue.status]?.variant}
-                                                className={statusStyles[issue.status]?.className}
-                                            >
-                                                {statusStyles[issue.status]?.label || issue.status}
-                                            </Badge>
+                                            {/* Durum */}
+                                            <div className="sm:col-span-3 flex items-center sm:justify-end">
+                                                <Badge
+                                                    variant={statusStyles[issue.status]?.variant}
+                                                    className={statusStyles[issue.status]?.className}
+                                                >
+                                                    {statusStyles[issue.status]?.label || issue.status}
+                                                </Badge>
+                                            </div>
                                         </div>
                                     </motion.li>
                                 ))}
