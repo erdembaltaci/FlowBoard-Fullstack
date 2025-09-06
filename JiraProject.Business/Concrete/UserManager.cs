@@ -4,9 +4,7 @@ using JiraProject.Business.Dtos;
 using JiraProject.Business.Exceptions;
 using JiraProject.Entities;
 using JiraProject.Entities.Enums;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -20,7 +18,6 @@ namespace JiraProject.Business.Concrete
         private readonly IGenericRepository<Project> _projectRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        private readonly FileStorageService _fileStorageService;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
 
@@ -30,7 +27,6 @@ namespace JiraProject.Business.Concrete
             IGenericRepository<Project> projectRepository,
             IUnitOfWork unitOfWork,
             IMapper mapper,
-            FileStorageService fileStorageService,
             IEmailService emailService,
             IConfiguration configuration)
         {
@@ -39,7 +35,6 @@ namespace JiraProject.Business.Concrete
             _projectRepository = projectRepository;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-            _fileStorageService = fileStorageService;
             _emailService = emailService;
             _configuration = configuration;
         }
@@ -47,21 +42,25 @@ namespace JiraProject.Business.Concrete
         public async Task<UserDto> CreateUserAsync(UserCreateDto dto)
         {
             var existingUser = (await _userRepository.FindAsync(u => u.Email.ToLower() == dto.Email.ToLower() && !u.IsDeleted))
-                               .FirstOrDefault();
+                                     .FirstOrDefault();
             if (existingUser != null) throw new ConflictException("Bu e-posta adresi zaten kullanılıyor.");
 
             var userEntity = _mapper.Map<User>(dto);
+            
+            // Bu kısım temizlenmişti, artık avatar kaydetmiyor.
             userEntity.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
             userEntity.Role = UserRole.BusinessUser;
+            
             await _userRepository.AddAsync(userEntity);
             await _unitOfWork.CompleteAsync();
+            
             return _mapper.Map<UserDto>(userEntity);
         }
 
         public async Task<UserDto?> LoginAsync(string email, string password)
         {
             var user = (await _userRepository.FindAsync(u => u.Email.ToLower() == email.ToLower() && !u.IsDeleted))
-                        .FirstOrDefault();
+                             .FirstOrDefault();
             if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash)) return null;
             return _mapper.Map<UserDto>(user);
         }
@@ -77,11 +76,10 @@ namespace JiraProject.Business.Concrete
         {
             var userFromDb = await _userRepository.GetByIdAsync(userId);
             if (userFromDb == null || userFromDb.IsDeleted) throw new NotFoundException("Güncellenecek kullanıcı bulunamadı.");
-            if (dto.ProfilePicture != null)
-            {
-                userFromDb.AvatarUrl = await _fileStorageService.SaveFileAsync(dto.ProfilePicture);
-            }
-            _mapper.Map(dto, userFromDb);
+           
+            
+            _mapper.Map(dto, userFromDb); // Sadece metin tabanlı bilgileri güncelle
+            _userRepository.Update(userFromDb);
             await _unitOfWork.CompleteAsync();
         }
 
@@ -90,9 +88,25 @@ namespace JiraProject.Business.Concrete
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null || user.IsDeleted) throw new NotFoundException("Kullanıcı bulunamadı.");
             if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.PasswordHash)) throw new BadRequestException("Mevcut şifre yanlış.");
+            
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            _userRepository.Update(user);
             await _unitOfWork.CompleteAsync();
         }
+        
+        // Bu metot, sadece UploadsController tarafından kullanılır ve doğrudur.
+        public async Task UpdateUserAvatarAsync(int userId, string avatarUrl)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user != null)
+            {
+                user.AvatarUrl = avatarUrl;
+                _userRepository.Update(user); 
+                await _unitOfWork.CompleteAsync();
+            }
+        }
+        
+        // --- DİĞER TÜM METOTLAR DEĞİŞİKLİK OLMADAN AYNI KALABİLİR ---
 
         public async Task<IEnumerable<UserSummaryDto>> GetAllUsersAsync()
         {
@@ -113,6 +127,7 @@ namespace JiraProject.Business.Concrete
             if (userFromDb == null || userFromDb.IsDeleted) throw new NotFoundException("Güncellenecek kullanıcı bulunamadı.");
 
             _mapper.Map(dto, userFromDb);
+            _userRepository.Update(userFromDb);
             await _unitOfWork.CompleteAsync();
             return _mapper.Map<UserDto>(userFromDb);
         }
@@ -123,6 +138,7 @@ namespace JiraProject.Business.Concrete
             if (user != null && !user.IsDeleted)
             {
                 user.IsDeleted = true;
+                _userRepository.Update(user);
                 await _unitOfWork.CompleteAsync();
             }
         }
@@ -138,6 +154,7 @@ namespace JiraProject.Business.Concrete
             if (!Enum.TryParse<UserRole>(dto.NewRole, true, out var newRole)) throw new BadRequestException("Geçersiz rol adı.");
 
             userToUpdate.Role = newRole;
+            _userRepository.Update(userToUpdate);
             await _unitOfWork.CompleteAsync();
         }
 
@@ -155,7 +172,9 @@ namespace JiraProject.Business.Concrete
         public async Task<DashboardStatsDto> GetDashboardStatsAsync(int userId)
         {
             var allMyIssues = await _issueRepository.FindAsync(i => !i.IsDeleted && i.AssigneeId == userId);
-            var allMyProjects = await _projectRepository.FindAsync(p => !p.IsDeleted && p.Team.UserTeams.Any(ut => ut.UserId == userId));
+            var allMyProjectsQuery = _projectRepository.GetQueryableWithIncludes("Team.UserTeams");
+            var allMyProjects = await allMyProjectsQuery.Where(p => !p.IsDeleted && p.Team.UserTeams.Any(ut => ut.UserId == userId)).ToListAsync();
+            
             return new DashboardStatsDto
             {
                 AssignedTasksCount = allMyIssues.Count(i => i.Status != JiraProject.Entities.Enums.TaskStatus.Done),
@@ -175,18 +194,15 @@ namespace JiraProject.Business.Concrete
             return _mapper.Map<IEnumerable<DashboardTaskDto>>(recentIssues);
         }
 
-        // ==========================================
-        // ŞİFRE SIFIRLAMA METOTLARI
-        // ==========================================
-
         public async Task RequestPasswordResetAsync(string email)
         {
             var user = (await _userRepository.FindAsync(u => u.Email.ToLower() == email.ToLower() && !u.IsDeleted))
-                       .FirstOrDefault();
-            if (user == null) return; // güvenlik nedeniyle e-posta bulunmasa da işlem devam ediyor
+                           .FirstOrDefault();
+            if (user == null) return;
 
             user.PasswordResetToken = Guid.NewGuid().ToString();
             user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
+            _userRepository.Update(user);
             await _unitOfWork.CompleteAsync();
 
             var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
@@ -210,21 +226,8 @@ namespace JiraProject.Business.Concrete
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
             user.PasswordResetToken = null;
             user.PasswordResetTokenExpiry = null;
+            _userRepository.Update(user);
             await _unitOfWork.CompleteAsync();
         }
-
-
-        public async Task UpdateUserAvatarAsync(int userId, string avatarUrl)
-        {
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user != null)
-            {
-                user.AvatarUrl = avatarUrl;
-                _userRepository.Update(user); 
-                await _unitOfWork.CompleteAsync();
-            }
-        
-        }
-        
     }
 }
