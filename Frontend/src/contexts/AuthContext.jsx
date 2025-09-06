@@ -1,40 +1,46 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { jwtDecode } from 'jwt-decode';
-import { userService } from '../services/userService'; // userService'i import ediyoruz
-import api from '../services/apiService'; // apiService'i de import ediyoruz
+import { jwtDecode } from 'jwt-decode'; // Bu paketi projenize ekleyin: npm install jwt-decode
+import { userService } from '../services/userService';
+import api from '../services/apiService';
 
 const AuthContext = createContext(null);
 
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (context === null) {
+        throw new Error("useAuth, bir AuthProvider içinde kullanılmalıdır.");
+    }
+    return context;
+};
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true); // En başta oturum kontrolü için yükleniyor
 
-    // Uygulama ilk yüklendiğinde token'ı kontrol et ve kullanıcı bilgilerini API'dan çek
     useEffect(() => {
         const initializeAuth = async () => {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('authToken');
                 if (token) {
                     const decodedToken = jwtDecode(token);
                     const currentTime = Date.now() / 1000;
 
                     if (decodedToken.exp > currentTime) {
-                        // Token geçerli, şimdi API'dan en güncel kullanıcı bilgisini alalım
+                        // Token geçerli, API'dan en güncel kullanıcı bilgisini al
                         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                         const response = await userService.getMyProfile();
-                        setUser(response.data); // Artık fullName, avatarUrl gibi tüm bilgiler var
+                        setUser(response.data);
                     } else {
                         // Token süresi dolmuş
-                        localStorage.removeItem('token');
+                        localStorage.removeItem('authToken');
                     }
                 }
             } catch (error) {
-                // Token geçersizse veya API'dan kullanıcı bilgisi alınamazsa (örn. kullanıcı silinmişse)
-                // güvenli bir şekilde çıkış yap
-                console.error("Auth initialize error:", error);
-                localStorage.removeItem('token');
+                console.error("Oturum başlatma hatası:", error);
+                localStorage.removeItem('authToken');
                 setUser(null);
             } finally {
+                // Kontrol işlemi bitti, yükleme durumunu kapat
                 setLoading(false);
             }
         };
@@ -43,54 +49,38 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = async (token) => {
-        localStorage.setItem('token', token);
+        localStorage.setItem('authToken', token);
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         try {
-            // Giriş yapıldığında token'ı çözmek yerine,
-            // doğrudan API'dan en güncel ve tam kullanıcı bilgisini çekiyoruz.
             const response = await userService.getMyProfile();
-            setUser(response.data); // Bu, fullName, avatarUrl ve en önemlisi güncel 'role' bilgisini anında alır.
+            setUser(response.data);
         } catch (error) {
-            console.error("Login sonrası profil alınamadı:", error);
-            // Hata durumunda, güvenli bir şekilde çıkış yap.
+            console.error("Giriş sonrası profil alınamadı:", error);
             logout();
         }
     };
 
-    // Profil sayfasında bilgi güncellendiğinde bu fonksiyon çağrılacak
+    const logout = () => {
+        localStorage.removeItem('authToken');
+        delete api.defaults.headers.common['Authorization'];
+        setUser(null);
+    };
+
     const refreshUser = async () => {
         try {
             const response = await userService.getMyProfile();
             setUser(response.data);
         } catch (error) {
             console.error("Kullanıcı bilgisi yenilenemedi.", error);
+            logout();
         }
     };
-
-    const logout = () => {
-        localStorage.removeItem('token');
-        delete api.defaults.headers.common['Authorization'];
-        setUser(null);
-    };
-
-    const value = { user, loading, login, logout, refreshUser };
-
-    if (loading) {
-        // Bütün sayfayı kaplayan şık bir yüklenme ekranı
-        return (
-            <div className="min-h-screen w-full bg-slate-900 flex items-center justify-center">
-                <div className="text-white text-xl">Uygulama Yükleniyor...</div>
-            </div>
-        );
-    }
+    
+    const value = { user, loading, login, logout, refreshUser, isAuthenticated: !!user };
 
     return (
         <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );
-};
-
-export const useAuth = () => {
-    return useContext(AuthContext);
 };
