@@ -1,5 +1,3 @@
-﻿// JiraProject.Business/Concrete/UserManager.cs
-
 using AutoMapper;
 using JiraProject.Business.Abstract;
 using JiraProject.Business.Dtos;
@@ -7,6 +5,7 @@ using JiraProject.Business.Exceptions;
 using JiraProject.Entities;
 using JiraProject.Entities.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +22,7 @@ namespace JiraProject.Business.Concrete
         private readonly IMapper _mapper;
         private readonly FileStorageService _fileStorageService;
         private readonly IEmailService _emailService;
+        private readonly IConfiguration _configuration; // Eklendi
 
         public UserManager(
             IGenericRepository<User> userRepository,
@@ -31,7 +31,8 @@ namespace JiraProject.Business.Concrete
             IUnitOfWork unitOfWork,
             IMapper mapper,
             FileStorageService fileStorageService,
-            IEmailService emailService)
+            IEmailService emailService,
+            IConfiguration configuration) // Eklendi
         {
             _userRepository = userRepository;
             _issueRepository = issueRepository;
@@ -40,11 +41,13 @@ namespace JiraProject.Business.Concrete
             _mapper = mapper;
             _fileStorageService = fileStorageService;
             _emailService = emailService;
+            _configuration = configuration; // Ata
         }
 
         public async Task<UserDto> CreateUserAsync(UserCreateDto dto)
         {
-            var existingUser = (await _userRepository.FindAsync(u => u.Email.ToLower() == dto.Email.ToLower() && !u.IsDeleted)).FirstOrDefault();
+            var existingUser = (await _userRepository.FindAsync(u => u.Email.ToLower() == dto.Email.ToLower() && !u.IsDeleted))
+                               .FirstOrDefault();
             if (existingUser != null) throw new ConflictException("Bu e-posta adresi zaten kullanılıyor.");
 
             var userEntity = _mapper.Map<User>(dto);
@@ -61,7 +64,8 @@ namespace JiraProject.Business.Concrete
 
         public async Task<UserDto?> LoginAsync(string email, string password)
         {
-            var user = (await _userRepository.FindAsync(u => u.Email.ToLower() == email.ToLower() && !u.IsDeleted)).FirstOrDefault();
+            var user = (await _userRepository.FindAsync(u => u.Email.ToLower() == email.ToLower() && !u.IsDeleted))
+                        .FirstOrDefault();
             if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash)) return null;
             return _mapper.Map<UserDto>(user);
         }
@@ -145,7 +149,10 @@ namespace JiraProject.Business.Concrete
         {
             if (string.IsNullOrWhiteSpace(searchTerm) || searchTerm.Length < 2) return Enumerable.Empty<UserSummaryDto>();
             var searchTermLower = searchTerm.ToLower();
-            var users = await _userRepository.FindAsync(u => !u.IsDeleted && ((u.FirstName + " " + u.LastName).ToLower().Contains(searchTermLower) || u.Username.ToLower().Contains(searchTermLower) || u.Email.ToLower().Contains(searchTermLower)));
+            var users = await _userRepository.FindAsync(u => !u.IsDeleted &&
+                ((u.FirstName + " " + u.LastName).ToLower().Contains(searchTermLower) ||
+                 u.Username.ToLower().Contains(searchTermLower) ||
+                 u.Email.ToLower().Contains(searchTermLower)));
             return _mapper.Map<IEnumerable<UserSummaryDto>>(users);
         }
 
@@ -155,9 +162,9 @@ namespace JiraProject.Business.Concrete
             var allMyProjects = await _projectRepository.FindAsync(p => !p.IsDeleted && p.Team.UserTeams.Any(ut => ut.UserId == userId));
             return new DashboardStatsDto
             {
-                AssignedTasksCount = allMyIssues.Count(i => i.Status != Entities.Enums.TaskStatus.Done),
-                DueSoonTasksCount = allMyIssues.Count(i => i.Status != Entities.Enums.TaskStatus.Done && i.DueDate.HasValue && i.DueDate.Value <= DateTime.UtcNow.AddDays(7)),
-                CompletedTasksCount = allMyIssues.Count(i => i.Status == Entities.Enums.TaskStatus.Done),
+                AssignedTasksCount = allMyIssues.Count(i => i.Status != TaskStatus.Done),
+                DueSoonTasksCount = allMyIssues.Count(i => i.Status != TaskStatus.Done && i.DueDate.HasValue && i.DueDate.Value <= DateTime.UtcNow.AddDays(7)),
+                CompletedTasksCount = allMyIssues.Count(i => i.Status == TaskStatus.Done),
                 ProjectsCount = allMyProjects.Count()
             };
         }
@@ -165,23 +172,31 @@ namespace JiraProject.Business.Concrete
         public async Task<IEnumerable<DashboardTaskDto>> GetMyOpenTasksAsync(int userId)
         {
             var issues = await _issueRepository.FindWithIncludesAsync(
-                predicate: i => !i.IsDeleted && i.AssigneeId == userId && i.Status != Entities.Enums.TaskStatus.Done,
+                predicate: i => !i.IsDeleted && i.AssigneeId == userId && i.Status != TaskStatus.Done,
                 includeStrings: new[] { "Project" }
             );
             var recentIssues = issues.OrderByDescending(i => i.CreatedAt).Take(5);
             return _mapper.Map<IEnumerable<DashboardTaskDto>>(recentIssues);
         }
 
+        // ==========================================
+        // ŞİFRE SIFIRLAMA METOTLARI
+        // ==========================================
+
         public async Task RequestPasswordResetAsync(string email)
         {
-            var user = (await _userRepository.FindAsync(u => u.Email.ToLower() == email.ToLower() && !u.IsDeleted)).FirstOrDefault();
-            if (user == null) return;
+            var user = (await _userRepository.FindAsync(u => u.Email.ToLower() == email.ToLower() && !u.IsDeleted))
+                       .FirstOrDefault();
+            if (user == null) return; // güvenlik nedeniyle e-posta bulunmasa da işlem devam ediyor
 
             user.PasswordResetToken = Guid.NewGuid().ToString();
             user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
             await _unitOfWork.CompleteAsync();
 
-            var resetLink = $"http://localhost:5173/reset-password?token={user.PasswordResetToken}";
+            // FRONTEND URL environment variable
+            var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
+            var resetLink = $"{frontendUrl}/reset-password?token={user.PasswordResetToken}";
+
             await _emailService.SendPasswordResetEmailAsync(user.Email, resetLink);
         }
 
