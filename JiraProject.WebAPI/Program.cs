@@ -1,10 +1,12 @@
 using AutoMapper;
+using CloudinaryDotNet;
 using FluentValidation.AspNetCore;
 using JiraProject.Business.Abstract;
 using JiraProject.Business.Concrete;
 using JiraProject.Business.Dtos;
 using JiraProject.Business.Mappings;
 using JiraProject.Business.ValidationRules;
+using JiraProject.DataAccess.Abstract;
 using JiraProject.DataAccess.Concrete;
 using JiraProject.DataAccess.Contexts;
 using JiraProject.WebAPI.Middleware;
@@ -12,7 +14,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -33,6 +34,7 @@ builder.Services.AddCors(options =>
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// ÖNEMLİ: Veritabanı sağlayıcısı Npgsql'den SqlServer'a değişti.
 builder.Services.AddDbContext<JiraProjectDbContext>(options =>
     options.UseSqlServer(connectionString));
 
@@ -44,26 +46,24 @@ var mapperConfig = new MapperConfiguration(cfg =>
 IMapper mapper = mapperConfig.CreateMapper();
 builder.Services.AddSingleton(mapper);
 
+// --- Cloudinary ---
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
-
 var cloudinarySettings = builder.Configuration.GetSection("CloudinarySettings").Get<CloudinarySettings>();
-
-if (string.IsNullOrEmpty(cloudinarySettings?.CloudName) || 
-    string.IsNullOrEmpty(cloudinarySettings.ApiKey) || 
+if (string.IsNullOrEmpty(cloudinarySettings?.CloudName) ||
+    string.IsNullOrEmpty(cloudinarySettings.ApiKey) ||
     string.IsNullOrEmpty(cloudinarySettings.ApiSecret))
 {
     throw new ArgumentNullException("Cloudinary settings are not configured properly in environment variables.");
 }
-
 Account account = new Account(
     cloudinarySettings.CloudName,
     cloudinarySettings.ApiKey,
     cloudinarySettings.ApiSecret
 );
 Cloudinary cloudinary = new Cloudinary(account);
-builder.Services.AddSingleton(cloudinary); 
+builder.Services.AddSingleton(cloudinary);
 
-// --- Services ---
+// --- Servislerin Kaydedilmesi ---
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IIssueService, IssueManager>();
@@ -71,6 +71,8 @@ builder.Services.AddScoped<IProjectService, ProjectManager>();
 builder.Services.AddScoped<IUserService, UserManager>();
 builder.Services.AddScoped<ITeamService, TeamManager>();
 builder.Services.AddSingleton<FileStorageService>();
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
@@ -78,7 +80,8 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
 }).AddFluentValidation(config =>
 {
-    config.RegisterValidatorsFromAssemblyContaining<UserCreateDtoValidator>();
+    // Validator'ın adını kendi projenize göre güncelleyin
+    config.RegisterValidatorsFromAssemblyContaining<UserCreateDtoValidator>(); 
 });
 
 // --- Authentication & Authorization ---
@@ -105,7 +108,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "JiraProject API", Version = "v1" });
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -133,12 +136,9 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
-builder.Services.AddScoped<IEmailService, EmailService>();
-
 var app = builder.Build();
 
-// --- Middleware ---
+// --- Middleware Pipeline ---
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
@@ -146,8 +146,6 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-// ❌ app.UseHttpsRedirection(); // kaldırdık çünkü Render SSL'i kendi yönetiyor
 
 app.UseStaticFiles();
 app.UseRouting();
@@ -157,6 +155,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// --- Render için doğru port ---
+// --- Render için doğru portu dinleme ---
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");
+
