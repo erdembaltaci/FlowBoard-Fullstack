@@ -30,7 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\JiraProject.Business\JiraProject.Business.csproj" />
-    <ProjectReference Include="..\JiraProject.DataAccess\JraProject.DataAccess.csproj" />
+    <ProjectReference Include="..\JiraProject.DataAccess\JiraProject.DataAccess.csproj" />
   </ItemGroup>
 
 </Project>
