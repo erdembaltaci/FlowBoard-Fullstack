@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, createContext, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { authService } from '../services/authService';
-import { useAuth } from '../contexts/AuthContext';
+// import { authService } from '../services/authService'; // GERÇEK PROJENİZDE BU SATIRI KULLANIN
+// import { useAuth } from '../contexts/AuthContext'; // GERÇEK PROJENİZDE BU SATIRI KULLANIN
 import { toast } from 'react-toastify';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,30 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { ArrowLeft, File } from 'lucide-react';
+
+
+// --- MOCK BAŞLANGICI ---
+// Bu bölüm, kodun önizlemede çalışabilmesi için eklenmiştir.
+// Gerçek projenizde bu bölümü silip yukarıdaki import satırlarını aktif hale getirin.
+
+// authService.js dosyasının sahte (mock) versiyonu
+const authService = {
+    register: (userData) => new Promise(resolve => setTimeout(() => resolve({ data: { message: "Kayıt başarılı" } }), 1000)),
+    login: (loginData) => new Promise(resolve => setTimeout(() => resolve({ data: { token: "fake-jwt-token-12345" } }), 1000)),
+    uploadAvatar: (file, token) => new Promise(resolve => setTimeout(() => resolve({ data: { message: "Avatar yüklendi" } }), 1000)),
+};
+
+// AuthContext'in sahte (mock) versiyonu
+const AuthContext = createContext();
+const useAuth = () => useContext(AuthContext);
+const AuthProvider = ({ children }) => {
+    const login = (token) => {
+        console.log("Kullanıcı giriş yaptı, token:", token);
+    };
+    return <AuthContext.Provider value={{ login }}>{children}</AuthContext.Provider>;
+};
+// --- MOCK BİTİŞİ ---
+
 
 function RegisterPage() {
     const [formData, setFormData] = useState({ username: '', email: '', password: '', firstName: '', lastName: '' });
@@ -35,19 +59,30 @@ function RegisterPage() {
         e.preventDefault();
         setIsLoading(true);
         try {
-            await authService.register({ ...formData, profilePicture });
-            toast.success("Kayıt başarılı! Giriş yapılıyor...");
+            // 1. ADIM: Kullanıcıyı resimsiz olarak kaydet.
+            await authService.register(formData);
+            
+            // 2. ADIM: Kayıt başarılı olduğu için, aynı bilgilerle giriş yap ve token al.
             const loginResponse = await authService.login({ email: formData.email, password: formData.password });
-            login(loginResponse.data.token);
+            const { token } = loginResponse.data;
+
+            // 3. ADIM: Eğer kullanıcı bir resim seçtiyse, alınan token ile avatarı yükle.
+            if (profilePicture && token) {
+                await authService.uploadAvatar(profilePicture, token);
+            }
+
+            // 4. ADIM: Tüm işlemler bittikten sonra AuthContext'i güncelle ve yönlendir.
+            toast.success("Kayıt başarılı! Yönlendiriliyorsunuz...");
+            login(token); // AuthContext'i güncelle
             navigate('/workspace');
-        } catch (err)
-        {
+
+        } catch (err) {
             const errorData = err.response?.data;
             if (errorData && errorData.errors) {
                 const errorMessages = Object.values(errorData.errors).flat();
                 toast.error(errorMessages.join('\n'));
             } else {
-                toast.error(errorData?.error || "Kayıt başarısız oldu. Lütfen bilgilerinizi kontrol edin.");
+                toast.error(errorData?.error || errorData?.message || "Kayıt başarısız oldu. Lütfen bilgilerinizi kontrol edin.");
             }
         } finally {
             setIsLoading(false);
@@ -60,7 +95,6 @@ function RegisterPage() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.5 }}
-                // DEĞİŞİKLİK BURADA: Butonun en üst katmanda olmasını sağlıyoruz.
                 className="absolute top-5 left-5 z-10"
             >
                 <Button asChild variant="ghost" className="text-slate-300 hover:text-white hover:bg-slate-800">
@@ -151,4 +185,34 @@ function RegisterPage() {
     );
 }
 
-export default RegisterPage;
+
+// Gerçek projenizde bu bileşeni `AuthProvider` ile sarmalamanız gerekecek.
+// Bu önizleme için ana bileşeni de ekliyoruz.
+function AppWrapper() {
+    // useNavigate ve Link'in çalışması için sahte bir router'a ihtiyacımız var.
+    // Gerçek projenizde React Router zaten kurulu olduğu için buna gerek yok.
+    const MockRouter = ({ children }) => <div>{children}</div>;
+    const useNavigate = () => (path) => console.log(`Yönlendiriliyor: ${path}`);
+    const Link = ({ to, children, ...props }) => <a href={to} {...props} onClick={(e) => e.preventDefault()}>{children}</a>;
+    
+    // toastify'ın sahte versiyonu
+    const toast = {
+        success: (message) => console.log(`Başarı: ${message}`),
+        error: (message) => console.error(`Hata: ${message}`),
+    };
+    
+    // global nesneleri taklit edelim
+    global.toast = toast;
+    
+    return (
+        <MockRouter>
+            <AuthProvider>
+                <RegisterPage />
+            </AuthProvider>
+        </MockRouter>
+    );
+}
+
+export default RegisterPage; // Gerçek projenizde sadece bu satır olmalı
+// export default AppWrapper; // Sadece önizleme ortamında bu satırı kullanın
+
