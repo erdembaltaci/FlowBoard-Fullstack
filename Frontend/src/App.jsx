@@ -4,7 +4,7 @@ import { useAuth } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Header from "./components/layout/Header";
 
-// --- TÜM SAYFA BİLEŞENLERİNİN İMPORT EDİLMESİ ---
+// Sayfa Bileşenleri
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -17,8 +17,6 @@ import IssueBoardPage from "./pages/IssueBoardPage";
 import ProfilePage from "./pages/ProfilePage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
-
-// --- YARDIMCI BİLEŞENLER ---
 
 // Header gibi ortak bileşenleri içeren ana layout
 const MainLayout = () => (
@@ -34,25 +32,20 @@ const MainLayout = () => (
 const PublicRoute = ({ children }) => {
     const { isAuthenticated, loading } = useAuth();
     if (loading) {
-        // Oturum kontrol edilirken bir yüklenme ekranı gösterilir
         return <div className="min-h-screen w-full bg-slate-900 flex items-center justify-center text-white">Yükleniyor...</div>;
     }
-    // Eğer kullanıcı giriş yapmışsa, onu ana çalışma alanına yönlendir
     return isAuthenticated ? <Navigate to="/workspace" /> : children;
 };
 
 
-// --- ANA APP BİLEŞENİ ---
-
 function App() {
-  // Sunucuyu canlı tutmak için periyodik istek (ping)
   useEffect(() => {
     const interval = setInterval(() => {
       // ÖNEMLİ: Bu URL'yi kendi Render backend adresinizle değiştirmeyi unutmayın!
       fetch("https://flowboard-backend.onrender.com/health")
         .then((res) => console.log("Sunucuya ping gönderildi:", res.status))
         .catch((err) => console.error("Sunucuya ping gönderilemedi:", err));
-    }, 14 * 60 * 1000); // Render'ın ücretsiz servisleri için 14 dakikada bir idealdir.
+    }, 14 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -83,11 +76,9 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
       </Route>
 
-      {/* Eşleşmeyen tüm rotalar için yönlendirme */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 }
 
 export default App;
-
