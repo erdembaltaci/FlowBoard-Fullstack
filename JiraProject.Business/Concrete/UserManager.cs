@@ -216,5 +216,18 @@ namespace JiraProject.Business.Concrete
             user.PasswordResetTokenExpiry = null;
             await _unitOfWork.CompleteAsync();
         }
+
+
+        public async Task UpdateUserAvatarAsync(int userId, string avatarUrl)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user != null)
+            {
+                user.AvatarUrl = avatarUrl;
+                await _userRepository.UpdateAsync(user);
+            }
+        
+        }
+        
     }
 }
