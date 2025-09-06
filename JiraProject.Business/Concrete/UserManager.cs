@@ -51,10 +51,6 @@ namespace JiraProject.Business.Concrete
             if (existingUser != null) throw new ConflictException("Bu e-posta adresi zaten kullanılıyor.");
 
             var userEntity = _mapper.Map<User>(dto);
-            if (dto.ProfilePicture != null)
-            {
-                userEntity.AvatarUrl = await _fileStorageService.SaveFileAsync(dto.ProfilePicture);
-            }
             userEntity.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
             userEntity.Role = UserRole.BusinessUser;
             await _userRepository.AddAsync(userEntity);
