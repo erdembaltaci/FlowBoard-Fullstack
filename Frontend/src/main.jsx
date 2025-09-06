@@ -13,11 +13,22 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     {/* 1. Router, tüm yönlendirme işlemlerini yönetir */}
     <Router>
-      {/* 2. AuthProvider, tüm uygulamaya oturum bilgilerini sağlar (ANA PRİZ) */}
+      {/* 2. AuthProvider, tüm uygulamaya oturum bilgilerini sağlar */}
       <AuthProvider>
         {/* 3. App bileşeni artık bu iki provider'ın içinde güvende */}
         <App />
-        <ToastContainer position="bottom-right" autoClose={3000} theme="dark" />
+        <ToastContainer
+            position="bottom-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="dark"
+          />
       </AuthProvider>
     </Router>
   </React.StrictMode>
