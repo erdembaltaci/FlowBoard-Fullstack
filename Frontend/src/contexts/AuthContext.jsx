@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true); // En başta oturum kontrolü için yükleniyor
 
     useEffect(() => {
+        // Uygulama ilk açıldığında veya sayfa yenilendiğinde çalışır
         const initializeAuth = async () => {
             try {
                 const token = localStorage.getItem('authToken');
