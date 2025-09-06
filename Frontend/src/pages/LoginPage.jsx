@@ -42,19 +42,15 @@ function RegisterPage() {
         e.preventDefault();
         setIsLoading(true);
         try {
-            // 1. ADIM: Kullanıcıyı resimsiz olarak kaydet.
             await authService.register(formData);
             
-            // 2. ADIM: Kayıt başarılı olduğu için, aynı bilgilerle giriş yap ve token al.
             const loginResponse = await authService.login({ email: formData.email, password: formData.password });
             const { token } = loginResponse.data;
 
-            // 3. ADIM: Eğer kullanıcı bir resim seçtiyse, alınan token ile avatarı yükle.
             if (profilePicture && token) {
                 await authService.uploadAvatar(profilePicture, token);
             }
 
-            // 4. ADIM: Tüm işlemler bittikten sonra AuthContext'i güncelle ve yönlendir.
             toast.success("Kayıt başarılı! Yönlendiriliyorsunuz...");
             await login(token);
             navigate('/workspace');
