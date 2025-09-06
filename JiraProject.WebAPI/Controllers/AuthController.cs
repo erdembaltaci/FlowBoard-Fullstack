@@ -1,4 +1,4 @@
-﻿using JiraProject.Business.Abstract;
+using JiraProject.Business.Abstract;
 using JiraProject.Business.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,8 +23,7 @@ public class AuthController : ControllerBase
         _userService = userService;
         _configuration = configuration;
     }
-
-  
+    
     [HttpPost("user-register")]
     public async Task<IActionResult> Register([FromForm] UserCreateDto userCreateDto)
     {
@@ -32,11 +31,8 @@ public class AuthController : ControllerBase
     
         var createdUser = await _userService.CreateUserAsync(userCreateDto);
 
-        if (!string.IsNullOrEmpty(createdUser.AvatarUrl))
-        {
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            createdUser.AvatarUrl = $"{baseUrl}{createdUser.AvatarUrl}";
-        }
+        // DÜZELTME: Avatar URL'si artık Cloudinary'den tam olarak geldiği için,
+        // burada URL'yi manipüle etmeye gerek yoktur. Bu blok kaldırıldı.
 
         return Ok(createdUser);
     }
@@ -50,26 +46,20 @@ public class AuthController : ControllerBase
         {
             return Unauthorized("Geçersiz e-posta veya şifre.");
         }
+        
+        // DÜZELTME: Avatar URL'si artık Cloudinary'den tam olarak geldiği için,
+        // burada URL'yi manipüle etmeye gerek yoktur. Bu blok kaldırıldı.
 
-        if (!string.IsNullOrEmpty(userDto.AvatarUrl))
-        {
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            userDto.AvatarUrl = $"{baseUrl}{userDto.AvatarUrl}";
-        }
-
-         var token = GenerateJwtToken(userDto);
+        var token = GenerateJwtToken(userDto);
 
         return Ok(new { token, user = userDto });
     }
-
 
     [HttpPost("forgot-password")]
     [AllowAnonymous]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
     {
         await _userService.RequestPasswordResetAsync(dto.Email);
-
-        // Güvenlik nedeniyle, e-posta bulunsa da bulunmasa da her zaman aynı mesajı dönüyoruz.
         return Ok(new { message = "Eğer bu e-posta adresi sistemimizde kayıtlıysa, şifre sıfırlama linki gönderilmiştir." });
     }
 
@@ -80,33 +70,34 @@ public class AuthController : ControllerBase
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
         await _userService.ResetPasswordAsync(dto);
-
         return Ok(new { message = "Şifreniz başarıyla güncellendi. Şimdi giriş yapabilirsiniz." });
     }
 
-    // === Token Üreten Yardımcı Metot (Artık UserDto alıyor) ===
+    // === TOKEN ÜRETEN YARDIMCI METOT (NİHAİ HALİ) ===
     private string GenerateJwtToken(UserDto userDto)
     {
         var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.NameIdentifier, userDto.Id.ToString()),
-        new Claim(ClaimTypes.Name, userDto.Username ?? string.Empty),
-        new Claim(ClaimTypes.Role, userDto.Role ?? string.Empty)
-    };
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, userDto.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.UniqueName, userDto.Username ?? string.Empty),
+            new Claim(ClaimTypes.Role, userDto.Role ?? string.Empty)
+        };
 
-        var now = DateTime.UtcNow;
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expires = DateTime.Now.AddDays(Convert.ToDouble(_configuration["Jwt:ExpireDays"]));
+
+        // 'DateTime.Now' yerine her zaman 'DateTime.UtcNow' kullanmak, sunucu saat farkı sorunlarını engeller.
+        var expires = DateTime.UtcNow.AddDays(Convert.ToDouble(_configuration["Jwt:ExpireDays"]));
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            NotBefore = now,
-            Expires = expires,
+            Expires = expires, // Bitiş zamanı
             SigningCredentials = creds,
-            Issuer = _configuration["Jwt:Issuer"],    
-            Audience = _configuration["Jwt:Audience"]  
+            Issuer = _configuration["Jwt:Issuer"],
+            Audience = _configuration["Jwt:Audience"],
+            NotBefore = DateTime.UtcNow,
+            IssuedAt = DateTime.UtcNow
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();
