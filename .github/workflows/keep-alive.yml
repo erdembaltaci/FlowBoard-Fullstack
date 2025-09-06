@@ -2,15 +2,16 @@ name: Keep Alive
 
 on:
   schedule:
-    - cron: "*/1 * * * *" # her dakika çalışır
+    - cron: '*/10 * * * *'
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Loop 2 Times (30s aralıkla)
+      - name: Send request to Render service
         run: |
-          curl -s https://flowboard-fullstack.onrender.com || true
-          sleep 30
-          curl -s https://flowboard-fullstack.onrender.com || true
+          # -f veya --fail seçeneği, 4xx veya 5xx gibi HTTP hatalarında curl'ün başarısız olmasını sağlar.
+          # Bu sayede sitenizde bir sorun varsa workflow gerçekten hata verir.
+          # Zaman aşımını 60 saniyeye çıkararak Render'ın uyanmasına zaman tanıyın.
+          curl -fsS --retry 3 --retry-delay 5 --max-time 60 https://flowboard-fullstack.onrender.com
