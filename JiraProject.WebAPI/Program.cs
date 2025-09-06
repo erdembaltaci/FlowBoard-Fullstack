@@ -44,6 +44,25 @@ var mapperConfig = new MapperConfiguration(cfg =>
 IMapper mapper = mapperConfig.CreateMapper();
 builder.Services.AddSingleton(mapper);
 
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
+
+var cloudinarySettings = builder.Configuration.GetSection("CloudinarySettings").Get<CloudinarySettings>();
+
+if (string.IsNullOrEmpty(cloudinarySettings?.CloudName) || 
+    string.IsNullOrEmpty(cloudinarySettings.ApiKey) || 
+    string.IsNullOrEmpty(cloudinarySettings.ApiSecret))
+{
+    throw new ArgumentNullException("Cloudinary settings are not configured properly in environment variables.");
+}
+
+Account account = new Account(
+    cloudinarySettings.CloudName,
+    cloudinarySettings.ApiKey,
+    cloudinarySettings.ApiSecret
+);
+Cloudinary cloudinary = new Cloudinary(account);
+builder.Services.AddSingleton(cloudinary); 
+
 // --- Services ---
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
