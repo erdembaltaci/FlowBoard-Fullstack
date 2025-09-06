@@ -1,9 +1,10 @@
-import React, { useEffect } from "react"; // useEffect ekledik
-import { Routes, Route, Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "./contexts/AuthContext";
+import React, { useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Header from "./components/layout/Header";
 
+// Sayfa Bileşenleri
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -17,63 +18,79 @@ import ProfilePage from "./pages/ProfilePage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 
+// Header gibi ortak bileşenleri içeren ana layout
 const MainLayout = () => (
   <div className="min-h-screen w-full bg-slate-900">
     <Header />
     <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Outlet />
+      <Outlet /> 
     </main>
   </div>
 );
 
-function App() {
-  const { user } = useAuth();
+// Giriş yapmış kullanıcıların login gibi sayfalara gitmesini engelleyen yardımcı bileşen
+const PublicRoute = ({ children }) => {
+    const { isAuthenticated, loading } = useAuth();
+    if (loading) {
+        return <div className="min-h-screen w-full bg-slate-900 flex items-center justify-center text-white">Yükleniyor...</div>;
+    }
+    return isAuthenticated ? <Navigate to="/workspace" /> : children;
+};
 
-  // 🔹 Sunucuyu canlı tutmak için ping
+
+function AppRoutes() {
+  // Sunucuyu canlı tutmak için periyodik istek (ping)
   useEffect(() => {
     const interval = setInterval(() => {
-      fetch("https://senin-api.onrender.com/health")
-        .then((res) => console.log("Frontend Ping:", res.status))
-        .catch((err) => console.error("Frontend Ping failed", err));
-    }, 4 * 60 * 1000); // 4 dakikada bir
+      // ÖNEMLİ: Bu URL'yi kendi Render backend adresinizle değiştirmeyi unutmayın!
+      fetch("https://flowboard-backend.onrender.com/health") 
+        .then((res) => console.log("Sunucuya ping gönderildi:", res.status))
+        .catch((err) => console.error("Sunucuya ping gönderilemedi:", err));
+    }, 14 * 60 * 1000); // Render'ın ücretsiz servisleri için 14 dakikada bir idealdir.
 
     return () => clearInterval(interval);
   }, []);
 
   return (
     <Routes>
-      {/* Public routes */}
-      <Route
-        path="/"
-        element={!user ? <LandingPage /> : <Navigate to="/workspace" />}
-      />
-      <Route
-        path="/login"
-        element={!user ? <LoginPage /> : <Navigate to="/workspace" />}
-      />
-      <Route
-        path="/register"
-        element={!user ? <RegisterPage /> : <Navigate to="/workspace" />}
-      />
+      {/* Herkesin Erişebileceği Rotalar */}
+      <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-      {/* Protected routes */}
-      <Route element={<ProtectedRoute />}>
-        <Route element={<MainLayout />}>
-          <Route path="/workspace" element={<WorkspacePage />} />
-          <Route path="/projects" element={<ProjectsListPage />} />
-          <Route path="/teams" element={<TeamsListPage />} />
-          <Route path="/team/:teamId" element={<TeamDetailPage />} />
-          <Route path="/project/:projectId/issues" element={<IssueListPage />} />
-          <Route path="/project/:projectId/board" element={<IssueBoardPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-        </Route>
+      {/* Sadece Giriş Yapmış Kullanıcıların Erişebileceği Korumalı Rotalar */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/workspace" element={<WorkspacePage />} />
+        <Route path="/projects" element={<ProjectsListPage />} />
+        <Route path="/teams" element={<TeamsListPage />} />
+        <Route path="/team/:teamId" element={<TeamDetailPage />} />
+        <Route path="/project/:projectId/issues" element={<IssueListPage />} />
+        <Route path="/project/:projectId/board" element={<IssueBoardPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Route>
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to={user ? "/workspace" : "/"} />} />
+      {/* Eşleşmeyen tüm rotalar için yönlendirme */}
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
+  );
+}
+
+// Ana App bileşeni AuthProvider'ı sarmalar
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </Router>
   );
 }
 
