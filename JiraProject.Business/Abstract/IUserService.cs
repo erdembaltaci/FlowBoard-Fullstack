@@ -30,5 +30,6 @@ namespace JiraProject.Business.Abstract
         Task<IEnumerable<DashboardTaskDto>> GetMyOpenTasksAsync(int userId);
         Task RequestPasswordResetAsync(string email);
         Task ResetPasswordAsync(ResetPasswordDto dto);
+        Task UpdateUserAvatarAsync(int userId, string avatarUrl);
     }
 }
