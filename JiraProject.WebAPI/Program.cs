@@ -6,7 +6,6 @@ using JiraProject.Business.Concrete;
 using JiraProject.Business.Dtos;
 using JiraProject.Business.Mappings;
 using JiraProject.Business.ValidationRules;
-using JiraProject.DataAccess.Abstract;
 using JiraProject.DataAccess.Concrete;
 using JiraProject.DataAccess.Contexts;
 using JiraProject.WebAPI.Middleware;
