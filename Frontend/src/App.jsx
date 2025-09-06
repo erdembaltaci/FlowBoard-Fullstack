@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react"; // useEffect ekledik
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -28,6 +28,17 @@ const MainLayout = () => (
 
 function App() {
   const { user } = useAuth();
+
+  // 🔹 Sunucuyu canlı tutmak için ping
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetch("https://senin-api.onrender.com/health")
+        .then((res) => console.log("Frontend Ping:", res.status))
+        .catch((err) => console.error("Frontend Ping failed", err));
+    }, 4 * 60 * 1000); // 4 dakikada bir
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Routes>
