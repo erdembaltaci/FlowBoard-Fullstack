@@ -4,7 +4,7 @@ import { useAuth } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Header from "./components/layout/Header";
 
-// Sayfa Bileşenleri
+// --- TÜM SAYFA BİLEŞENLERİNİN İMPORT EDİLMESİ ---
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -18,34 +18,41 @@ import ProfilePage from "./pages/ProfilePage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 
+// --- YARDIMCI BİLEŞENLER ---
+
 // Header gibi ortak bileşenleri içeren ana layout
 const MainLayout = () => (
   <div className="min-h-screen w-full bg-slate-900">
     <Header />
     <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Outlet />
+      <Outlet /> 
     </main>
   </div>
 );
 
-// Giriş yapmış kullanıcıların login gibi sayfalara gitmesini engelleyen yardımcı bileşen
+// Giriş yapmış kullanıcıların login, register gibi sayfalara gitmesini engelleyen rota
 const PublicRoute = ({ children }) => {
     const { isAuthenticated, loading } = useAuth();
     if (loading) {
+        // Oturum kontrol edilirken bir yüklenme ekranı gösterilir
         return <div className="min-h-screen w-full bg-slate-900 flex items-center justify-center text-white">Yükleniyor...</div>;
     }
+    // Eğer kullanıcı giriş yapmışsa, onu ana çalışma alanına yönlendir
     return isAuthenticated ? <Navigate to="/workspace" /> : children;
 };
+
+
+// --- ANA APP BİLEŞENİ ---
 
 function App() {
   // Sunucuyu canlı tutmak için periyodik istek (ping)
   useEffect(() => {
     const interval = setInterval(() => {
       // ÖNEMLİ: Bu URL'yi kendi Render backend adresinizle değiştirmeyi unutmayın!
-      fetch("https://flowboard-backend.onrender.com/health")
+      fetch("https://flowboard-backend.onrender.com/health") 
         .then((res) => console.log("Sunucuya ping gönderildi:", res.status))
         .catch((err) => console.error("Sunucuya ping gönderilemedi:", err));
-    }, 14 * 60 * 1000); // Render'ın ücretsiz servisleri için 14 dakikada bir idealdir.
+    }, 6 * 60 * 1000); // Render'ın ücretsiz servisleri için 14 dakikada bir idealdir.
 
     return () => clearInterval(interval);
   }, []);
@@ -83,3 +90,4 @@ function App() {
 }
 
 export default App;
+
