@@ -23,7 +23,7 @@ namespace JiraProject.Business.Concrete
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
 
-        // DEĞİŞİKLİK: Artık FileStorageService'e ihtiyacımız yok, constructor'dan kaldırıldı.
+        // DEĞİŞİKLİK: Artık FileStorageService'e ihtiyacımız yok, constructor'dan ve field'lardan kaldırıldı.
         public UserManager(
             IGenericRepository<User> userRepository,
             IGenericRepository<Issue> issueRepository,
@@ -87,7 +87,6 @@ namespace JiraProject.Business.Concrete
         }
         
         // --- DİĞER TÜM METOTLAR DEĞİŞİKLİK OLMADAN AYNI KALABİLİR ---
-        // (LoginAsync, GetMyProfileAsync, ChangePasswordAsync vb.)
         #region Other Methods
         public async Task<UserDto?> LoginAsync(string email, string password)
         {
