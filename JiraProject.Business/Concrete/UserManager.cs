@@ -4,11 +4,12 @@ using JiraProject.Business.Dtos;
 using JiraProject.Business.Exceptions;
 using JiraProject.Entities;
 using JiraProject.Entities.Enums;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 
 namespace JiraProject.Business.Concrete
 {
@@ -22,6 +23,7 @@ namespace JiraProject.Business.Concrete
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
 
+        // DEĞİŞİKLİK: Artık FileStorageService'e ihtiyacımız yok, constructor'dan kaldırıldı.
         public UserManager(
             IGenericRepository<User> userRepository,
             IGenericRepository<Issue> issueRepository,
@@ -48,7 +50,7 @@ namespace JiraProject.Business.Concrete
 
             var userEntity = _mapper.Map<User>(dto);
             
-            // Bu kısım temizlenmişti, artık avatar kaydetmiyor.
+            // Bu kısım temizlendi, artık avatar kaydetmiyor.
             userEntity.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
             userEntity.Role = UserRole.BusinessUser;
             
@@ -57,6 +59,35 @@ namespace JiraProject.Business.Concrete
             
             return _mapper.Map<UserDto>(userEntity);
         }
+
+        public async Task UpdateMyProfileAsync(int userId, UserUpdateDto dto)
+        {
+            var userFromDb = await _userRepository.GetByIdAsync(userId);
+            if (userFromDb == null || userFromDb.IsDeleted) throw new NotFoundException("Güncellenecek kullanıcı bulunamadı.");
+            
+            // --- EN KRİTİK DEĞİŞİKLİK BURADA ---
+            // Eski dosya kaydetme satırı tamamen kaldırıldı.
+            // Artık avatar güncelleme işi SADECE UploadsController üzerinden yapılacak.
+            
+            _mapper.Map(dto, userFromDb); // Sadece metin tabanlı bilgileri güncelle
+            _userRepository.Update(userFromDb);
+            await _unitOfWork.CompleteAsync();
+        }
+
+        // Bu metot, sadece UploadsController tarafından kullanılır ve doğrudur.
+        public async Task UpdateUserAvatarAsync(int userId, string avatarUrl)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user != null)
+            {
+                user.AvatarUrl = avatarUrl;
+                _userRepository.Update(user); 
+                await _unitOfWork.CompleteAsync();
+            }
+        }
+        
+        // --- DİĞER TÜM METOTLAR DEĞİŞİKLİK OLMADAN AYNI KALABİLİR ---
+        // (LoginAsync, GetMyProfileAsync, ChangePasswordAsync vb.)
 
         public async Task<UserDto?> LoginAsync(string email, string password)
         {
@@ -73,17 +104,6 @@ namespace JiraProject.Business.Concrete
             return _mapper.Map<UserProfileDto>(user);
         }
 
-        public async Task UpdateMyProfileAsync(int userId, UserUpdateDto dto)
-        {
-            var userFromDb = await _userRepository.GetByIdAsync(userId);
-            if (userFromDb == null || userFromDb.IsDeleted) throw new NotFoundException("Güncellenecek kullanıcı bulunamadı.");
-           
-            
-            _mapper.Map(dto, userFromDb); // Sadece metin tabanlı bilgileri güncelle
-            _userRepository.Update(userFromDb);
-            await _unitOfWork.CompleteAsync();
-        }
-
         public async Task ChangePasswordAsync(int userId, ChangePasswordDto dto)
         {
             var user = await _userRepository.GetByIdAsync(userId);
@@ -95,20 +115,6 @@ namespace JiraProject.Business.Concrete
             await _unitOfWork.CompleteAsync();
         }
         
-        // Bu metot, sadece UploadsController tarafından kullanılır ve doğrudur.
-        public async Task UpdateUserAvatarAsync(int userId, string avatarUrl)
-        {
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user != null)
-            {
-                user.AvatarUrl = avatarUrl;
-                _userRepository.Update(user); 
-                await _unitOfWork.CompleteAsync();
-            }
-        }
-        
-        // --- DİĞER TÜM METOTLAR DEĞİŞİKLİK OLMADAN AYNI KALABİLİR ---
-
         public async Task<IEnumerable<UserSummaryDto>> GetAllUsersAsync()
         {
             var users = await _userRepository.FindAsync(u => !u.IsDeleted);
@@ -232,3 +238,4 @@ namespace JiraProject.Business.Concrete
         }
     }
 }
+
