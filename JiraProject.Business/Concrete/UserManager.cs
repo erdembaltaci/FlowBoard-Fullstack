@@ -88,7 +88,7 @@ namespace JiraProject.Business.Concrete
         
         // --- DİĞER TÜM METOTLAR DEĞİŞİKLİK OLMADAN AYNI KALABİLİR ---
         // (LoginAsync, GetMyProfileAsync, ChangePasswordAsync vb.)
-
+        #region Other Methods
         public async Task<UserDto?> LoginAsync(string email, string password)
         {
             var user = (await _userRepository.FindAsync(u => u.Email.ToLower() == email.ToLower() && !u.IsDeleted))
@@ -236,6 +236,6 @@ namespace JiraProject.Business.Concrete
             _userRepository.Update(user);
             await _unitOfWork.CompleteAsync();
         }
+        #endregion
     }
 }
-
