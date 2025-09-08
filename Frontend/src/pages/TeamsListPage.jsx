@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { teamService } from '../services/teamService';
+import { authService } from '../services/authService'; // authService'i import et
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,7 +18,7 @@ const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, trans
 const itemVariants = { hidden: { opacity: 0, scale: 0.95, y: 20 }, visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } } };
 
 function TeamsListPage() {
-    const { user, login } = useAuth();
+    const { user, login } = useAuth(); // AuthContext'ten login fonksiyonunu alıyoruz
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,12 +26,11 @@ function TeamsListPage() {
     const [teamToDelete, setTeamToDelete] = useState(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
-    // DÜZELTME 1: Modal kapandığında "flicker" (yanıp sönme) sorununu çözer.
     useEffect(() => {
         if (!isModalOpen) {
             const timer = setTimeout(() => {
                 setTeamToEdit(null);
-            }, 300); // Animasyonun bitmesi için küçük bir gecikme
+            }, 300);
             return () => clearTimeout(timer);
         }
     }, [isModalOpen]);
@@ -58,10 +58,16 @@ function TeamsListPage() {
                 await teamService.updateTeam(teamData.id, { name: teamData.name });
                 toast.success("Takım başarıyla güncellendi.");
             } else {
+                // 1. ADIM: Takımı oluştur
                 await teamService.createTeam({ name: teamData.name, teamLeadId: user.id });
                 toast.success("Takım başarıyla oluşturuldu. Oturumunuz güncelleniyor...");
+
+                // --- EN KRİTİK DEĞİŞİKLİK BURADA ---
+                // 2. ADIM: Rolünüz değiştiği için, backend'den yeni ve güncel bir token talep et.
                 const response = await authService.refreshToken();
                 const newToken = response.data.token;
+
+                // 3. ADIM: Gelen yeni token ile AuthContext'i ve localStorage'ı güncelle.
                 if (newToken) {
                     await login(newToken);
                 }
@@ -151,9 +157,8 @@ function TeamsListPage() {
                     variants={containerVariants}
                 >
                     {teams.map(team => (
-                        <motion.div key={team.id} variants={itemVariants} className="relative">
+                        <motion.div key={team.id} variants={itemVariants} className="relative group">
                              {user && user.id === team.teamLead?.id && (
-                                // DÜZELTME 2: 'group' ve 'group-hover' sınıfları kaldırıldı.
                                 <div className="absolute top-2 right-2 z-20">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
@@ -175,7 +180,7 @@ function TeamsListPage() {
                             <Link to={`/team/${team.id}`} className="h-full block">
                                 <Card className="h-full flex flex-col bg-slate-800/50 border-slate-700 hover:border-indigo-500 transition-all duration-300 transform hover:-translate-y-1">
                                     <CardHeader>
-                                        <CardTitle className="text-xl text-slate-100 pr-8 text-left">{team.name}</CardTitle>
+                                        <CardTitle className="text-xl text-slate-100 pr-8">{team.name}</CardTitle>
                                         <CardDescription className="flex items-center gap-2 pt-2 text-slate-400">
                                             <Crown className="h-4 w-4 text-amber-400" />
                                             Lider: {team.teamLead?.fullName?.trim() || team.teamLead?.email || 'Belirtilmemiş'}
@@ -230,4 +235,3 @@ function TeamsListPage() {
 }
 
 export default TeamsListPage;
-
