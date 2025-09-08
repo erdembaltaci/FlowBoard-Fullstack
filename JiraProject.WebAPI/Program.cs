@@ -20,7 +20,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
-// --- CORS (herkese izin verir) ---
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -33,7 +32,7 @@ builder.Services.AddCors(options =>
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-// ÖNEMLİ: Veritabanı sağlayıcısı Npgsql'den SqlServer'a değişti.
+
 builder.Services.AddDbContext<JiraProjectDbContext>(options =>
     options.UseSqlServer(connectionString));
 
@@ -79,7 +78,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
 }).AddFluentValidation(config =>
 {
-    // Validator'ın adını kendi projenize göre güncelleyin
+   
     config.RegisterValidatorsFromAssemblyContaining<UserCreateDtoValidator>(); 
 });
 
@@ -157,4 +156,3 @@ app.MapControllers();
 // --- Render için doğru portu dinleme ---
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Run($"http://0.0.0.0:{port}");
-
