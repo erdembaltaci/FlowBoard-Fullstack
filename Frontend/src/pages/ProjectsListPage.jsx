@@ -23,15 +23,6 @@ function ProjectsListPage() {
     const [projectToDelete, setProjectToDelete] = useState(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
-    useEffect(() => {
-        if (!isModalOpen) {
-            const timer = setTimeout(() => {
-                setProjectToEdit(null);
-            }, 300);
-            return () => clearTimeout(timer);
-        }
-    }, [isModalOpen]);
-
     const fetchProjects = async () => {
         setLoading(true);
         try {
@@ -76,9 +67,12 @@ function ProjectsListPage() {
             setProjectToDelete(null);
         }
     };
-    
+
     const closeModal = () => {
         setIsModalOpen(false);
+        setTimeout(() => {
+            setProjectToEdit(null);
+        }, 300);
     };
     
     const handleSaveProject = async (projectData) => {
@@ -148,8 +142,10 @@ function ProjectsListPage() {
                         const statusBadgeClass = project.status === 'Active' ? "bg-green-500/20 text-green-400" : (project.status === 'Completed' ? "bg-red-500/20 text-red-400" : "bg-gray-500/20 text-gray-400");
                         
                         return (
-                            <motion.div key={project.id} variants={itemVariants} className="relative group">
+                            <motion.div key={project.id} variants={itemVariants} className="relative">
                                 {user && user.role === 'TeamLead' && (
+                                    // --- DEĞİŞİKLİK 1 ---
+                                    // 'opacity-0 group-hover:opacity-100' sınıfları kaldırıldı. Artık her zaman görünür.
                                     <div className="absolute top-2 right-2 z-20">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -171,9 +167,11 @@ function ProjectsListPage() {
                                 <Link to={`/project/${project.id}/issues`} className="h-full block">
                                     <Card className="h-full flex flex-col bg-slate-800/50 border-slate-700 hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-1">
                                         <CardHeader>
-                                            <div className="flex items-center justify-between">
-                                                <CardTitle className="text-xl text-slate-100 pr-8">{project.name}</CardTitle>
-                                                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${statusBadgeClass}`}>
+                                            <div className="flex items-start justify-between">
+                                                <CardTitle className="text-xl text-slate-100 pr-8 text-left">{project.name}</CardTitle>
+                                                {/* --- DEĞİŞİKLİK 2 --- */}
+                                                {/* `whitespace-nowrap` metnin alt satıra kaymasını engeller. `shrink-0` esnemesini önler. */}
+                                                <span className={`text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap shrink-0 ${statusBadgeClass}`}>
                                                     {statusText}
                                                 </span>
                                             </div>
@@ -182,7 +180,7 @@ function ProjectsListPage() {
                                             </CardDescription>
                                         </CardHeader>
                                         <CardContent className="flex-grow">
-                                            <p className="text-slate-400 text-sm line-clamp-3">{project.description || "Açıklama yok."}</p>
+                                            <p className="text-slate-400 text-sm line-clamp-3 text-left">{project.description || "Açıklama yok."}</p>
                                         </CardContent>
                                     </Card>
                                 </Link>
@@ -212,3 +210,4 @@ function ProjectsListPage() {
 }
 
 export default ProjectsListPage;
+
