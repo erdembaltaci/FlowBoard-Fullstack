@@ -23,7 +23,6 @@ namespace JiraProject.Business.Concrete
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
 
-        // DEĞİŞİKLİK: Artık FileStorageService'e ihtiyacımız yok, constructor'dan ve field'lardan kaldırıldı.
         public UserManager(
             IGenericRepository<User> userRepository,
             IGenericRepository<Issue> issueRepository,
@@ -63,12 +62,7 @@ namespace JiraProject.Business.Concrete
         public async Task UpdateMyProfileAsync(int userId, UserUpdateDto dto)
         {
             var userFromDb = await _userRepository.GetByIdAsync(userId);
-            if (userFromDb == null || userFromDb.IsDeleted) throw new NotFoundException("Güncellenecek kullanıcı bulunamadı.");
-            
-            // --- EN KRİTİK DEĞİŞİKLİK BURADA ---
-            // Eski dosya kaydetme satırı tamamen kaldırıldı.
-            // Artık avatar güncelleme işi SADECE UploadsController üzerinden yapılacak.
-            
+            if (userFromDb == null || userFromDb.IsDeleted) throw new NotFoundException("Güncellenecek kullanıcı bulunamadı.");         
             _mapper.Map(dto, userFromDb); // Sadece metin tabanlı bilgileri güncelle
             _userRepository.Update(userFromDb);
             await _unitOfWork.CompleteAsync();
@@ -86,7 +80,6 @@ namespace JiraProject.Business.Concrete
             }
         }
         
-        // --- DİĞER TÜM METOTLAR DEĞİŞİKLİK OLMADAN AYNI KALABİLİR ---
         #region Other Methods
         public async Task<UserDto?> LoginAsync(string email, string password)
         {
