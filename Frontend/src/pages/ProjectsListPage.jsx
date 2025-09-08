@@ -142,7 +142,9 @@ function ProjectsListPage() {
                         return (
                             <motion.div key={project.id} variants={itemVariants} className="relative group">
                                 {user && user.role === 'TeamLead' && (
-                                    <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    // --- DEĞİŞİKLİK BURADA ---
+                                    // 'opacity-0 group-hover:opacity-100' sınıfları kaldırıldı.
+                                    <div className="absolute top-2 right-2 z-20">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-slate-800/70 hover:bg-slate-700">
