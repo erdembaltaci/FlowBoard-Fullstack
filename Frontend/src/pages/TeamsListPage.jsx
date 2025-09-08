@@ -87,9 +87,15 @@ function TeamsListPage() {
         }
     };
 
+    // --- DEĞİŞİKLİK BURADA ---
     const closeModal = () => {
-        setIsModalOpen(false);
-        setTeamToEdit(null);
+        setIsModalOpen(false); // Önce modal'ı kapatma işlemini başlat.
+        
+        // Kapanma animasyonunun bitmesine zaman tanımak için
+        // düzenleme durumunu küçük bir gecikmeyle sıfırla.
+        setTimeout(() => {
+            setTeamToEdit(null);
+        }, 200); // 200 milisaniye genellikle yeterlidir.
     };
 
     if (loading) return <div className="p-8 text-center text-slate-400">Takımlar Yükleniyor...</div>;
@@ -139,8 +145,6 @@ function TeamsListPage() {
                     {teams.map(team => (
                         <motion.div key={team.id} variants={itemVariants} className="relative group">
                              {user && user.id === team.teamLead?.id && (
-                                // --- DEĞİŞİKLİK BURADA ---
-                                // 'opacity-0 group-hover:opacity-100' sınıfları kaldırıldı.
                                 <div className="absolute top-2 right-2 z-20">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
