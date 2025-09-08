@@ -15,7 +15,7 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true); // En başta oturum kontrolü için yükleniyor
+    const [loading, setLoading] = useState(true);
 
     const logout = useCallback(() => {
         localStorage.removeItem('authToken');
@@ -27,15 +27,14 @@ export const AuthProvider = ({ children }) => {
         try {
             const token = localStorage.getItem('authToken');
             if (!token) {
-                logout(); // Token yoksa çıkış yap ve işlemi bitir.
+                logout();
                 return;
             }
-            // userService'teki fonksiyon adınızın 'getMyProfile' olduğundan emin olun.
-            const response = await userService.getMyProfile(); 
+            const response = await userService.getMyProfile();
             setUser(response.data);
         } catch (error) {
             console.error("Kullanıcı bilgisi yenilenemedi, oturum sonlandırılıyor.", error);
-            logout(); // Hata durumunda güvenli çıkış yap.
+            logout();
         }
     }, [logout]);
 
@@ -49,27 +48,30 @@ export const AuthProvider = ({ children }) => {
                         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                         await refreshUser();
                     } else {
-                        logout(); // Süresi dolmuş token
+                        logout();
                     }
-                } catch (error) {
-                    console.error("Geçersiz token, oturum temizleniyor.", error);
-                    logout(); // Token decode edilemiyorsa geçersizdir
+                } catch {
+                    logout();
                 }
             }
-            // Token olmasa bile yüklemenin bittiğini belirt.
             setLoading(false);
         };
         initializeAuth();
     }, [refreshUser, logout]);
 
-    const login = (token) => {
-        // Token'ı 'authToken' adıyla localStorage'a kaydet.
-        localStorage.setItem('authToken', token); 
+    // --- EN KRİTİK DEĞİŞİKLİK BURADA ---
+    const login = async (token) => {
+        localStorage.setItem('authToken', token);
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        refreshUser(); // Giriş yapınca en güncel kullanıcı verisini çek.
+        // Hafızayı (user state'ini) güncelleme işleminin BİTMESİNİ BEKLE.
+        await refreshUser();
     };
     
     const value = { user, loading, login, logout, refreshUser, isAuthenticated: !!user };
     
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
 };
