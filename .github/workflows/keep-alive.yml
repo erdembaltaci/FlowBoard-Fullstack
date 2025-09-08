@@ -2,6 +2,7 @@ name: Keep Alive
 
 on:
   schedule:
+    # Her 10 dakikada bir çalıştır
     - cron: '*/10 * * * *'
   workflow_dispatch:
 
@@ -11,7 +12,5 @@ jobs:
     steps:
       - name: Send request to Render service
         run: |
-          # -f veya --fail seçeneği, 4xx veya 5xx gibi HTTP hatalarında curl'ün başarısız olmasını sağlar.
-          # Bu sayede sitenizde bir sorun varsa workflow gerçekten hata verir.
-          # Zaman aşımını 60 saniyeye çıkararak Render'ın uyanmasına zaman tanıyın.
-          curl -fsS --retry 3 --retry-delay 5 --max-time 60 https://flowboard-fullstack.onrender.com
+          # DEĞİŞİKLİK: URL, sizin belirttiğiniz doğru backend adresine güncellendi.
+          curl -fsS --retry 3 --retry-delay 5 --max-time 60 https://flowboard-fullstack.onrender.com/health
