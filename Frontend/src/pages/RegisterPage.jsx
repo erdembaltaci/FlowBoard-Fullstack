@@ -23,7 +23,8 @@ function RegisterPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
-    const { login } = useAuth();
+    // AuthContext'ten hem login hem de refreshUser fonksiyonlarını alıyoruz.
+    const { login, refreshUser } = useAuth();
     const fileInputRef = useRef(null);
 
     const handleChange = (e) => {
@@ -42,17 +43,25 @@ function RegisterPage() {
         e.preventDefault();
         setIsLoading(true);
         try {
+            // 1. ADIM: Kullanıcıyı metin verileriyle kaydet.
             await authService.register(formData);
             
+            // 2. ADIM: Kayıt başarılı olduğu için, aynı bilgilerle giriş yap ve token al.
             const loginResponse = await authService.login({ email: formData.email, password: formData.password });
             const { token } = loginResponse.data;
 
-            if (profilePicture && token) {
-                await authService.uploadAvatar(profilePicture, token);
-            }
-
-            toast.success("Kayıt başarılı! Yönlendiriliyorsunuz...");
+            // 3. ADIM: Avatar yüklemeden ÖNCE, token'ı AuthContext'e ve localStorage'a kaydet.
+            // Bu, bir sonraki isteğin yetkili olmasını sağlar.
             await login(token);
+
+            // 4. ADIM: Eğer bir fotoğraf seçilmişse, şimdi avatarı yükle.
+            if (profilePicture) {
+                await authService.uploadAvatar(profilePicture);
+                // Fotoğraf yüklendikten sonra en güncel kullanıcı bilgisini tekrar çek.
+                await refreshUser();
+            }
+            
+            toast.success("Kayıt başarılı! Yönlendiriliyorsunuz...");
             navigate('/workspace');
 
         } catch (err) {
@@ -152,4 +161,3 @@ function RegisterPage() {
 }
 
 export default RegisterPage;
-
