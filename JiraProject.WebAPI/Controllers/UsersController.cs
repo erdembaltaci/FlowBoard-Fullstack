@@ -28,7 +28,7 @@ namespace JiraProject.WebAPI.Controllers
         [HttpGet("me")] // Rota: GET /api/users/me
         public async Task<IActionResult> GetMyProfile()
         {
-            var userProfile = await _userService.GetUserByIdAsync(CurrentUserId);
+            var userProfile = await _userService.GetMyProfileAsync(CurrentUserId);
             return Ok(userProfile);
         }
 
