@@ -1,9 +1,6 @@
 import api from './apiService';
 
 export const authService = {
-    /**
-     * Yeni bir kullanıcı kaydı oluşturur.
-     */
     register: (userData) => {
         const formData = new FormData();
         formData.append('FirstName', userData.firstName);
@@ -14,27 +11,30 @@ export const authService = {
         return api.post('/auth/user-register', formData);
     },
 
-    /**
-     * Kullanıcı girişi yapar ve JWT token'ı döner.
-     */
     login: (loginData) => {
         return api.post('/auth/user-login', loginData);
     },
 
-    /**
-     * Kullanıcının avatarını yükler.
-     * @param {File} avatarFile - Yüklenecek dosya.
-     * @param {string} token - Login işleminden hemen sonra alınan taze token.
-     */
-    uploadAvatar: (avatarFile, token) => {
+    uploadAvatar: (avatarFile) => {
         const formData = new FormData();
         formData.append('avatar', avatarFile);
-
         return api.post('/uploads/avatar', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${token}`
-            },
+            headers: { 'Content-Type': 'multipart/form-data' },
         });
     },
+
+    refreshToken: () => {
+        // Bu istek, apiService interceptor'ı sayesinde mevcut (artık eski olan)
+        // token ile gönderilir ve karşılığında yeni, güncel bir token alır.
+        return api.post('/auth/refresh-token');
+    },
+
+    forgotPassword: (email) => {
+        return api.post('/auth/forgot-password', { email });
+    },
+
+    resetPassword: (resetDto) => {
+        return api.post('/auth/reset-password', resetDto);
+    }
 };
+
