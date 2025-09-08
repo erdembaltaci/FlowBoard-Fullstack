@@ -90,7 +90,10 @@ function IssueListPage() {
                     </Link>
                     <h1 className="text-4xl font-extrabold tracking-tight text-white">{project?.name} - Görevler</h1>
                 </div>
-                <div className="flex items-center gap-4">
+
+                {/* --- TASARIM DÜZELTMESİ BURADA --- */}
+                {/* Butonları sarmalayan div'e, mobil için dikey (flex-col), geniş ekranlar için yatay (sm:flex-row) olmasını söyledik. */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
                     <Button onClick={() => navigate(`/project/${projectId}/board`)} variant="outline" className="text-purple-400 border-purple-400/50 hover:bg-purple-400/10 hover:text-purple-300 transition-colors">
                         Görev Panosunu Görüntüle
                     </Button>
@@ -151,22 +154,16 @@ function IssueListPage() {
                         {issues.length > 0 ? (
                             <motion.ul variants={containerVariants} initial="hidden" animate="visible" className="divide-y divide-slate-700">
                                 {issues.map(issue => (
-                                    // LİSTE ELEMANI: Mobil için flex-row, masaüstü için grid olarak güncellendi
                                     <motion.li 
                                         key={issue.id} 
                                         variants={itemVariants} 
                                         className="flex flex-wrap justify-between items-center sm:grid sm:grid-cols-12 sm:gap-4 px-4 py-4"
                                     >
-                                        {/* Görev (Sol Taraf) */}
                                         <div className="sm:col-span-6 flex flex-col">
                                             <span className="font-medium text-slate-100">{issue.title}</span>
                                             <span className="text-xs text-slate-500">ID-{issue.id}</span>
                                         </div>
-
-                                        {/* Atanan ve Durum için yeni bir sağ hizalı sarmalayıcı. sm:contents ile masaüstü grid yapısını korur */}
                                         <div className="flex flex-col items-end gap-2 sm:contents">
-                                            
-                                            {/* Atanan kişi */}
                                             <div className="sm:col-span-3 flex items-center gap-2">
                                                 {issue.assignee ? (
                                                     <button
@@ -190,8 +187,6 @@ function IssueListPage() {
                                                     </div>
                                                 )}
                                             </div>
-
-                                            {/* Durum */}
                                             <div className="sm:col-span-3 flex sm:justify-end">
                                                 <Badge
                                                     variant={statusStyles[issue.status]?.variant}
@@ -200,7 +195,6 @@ function IssueListPage() {
                                                     {statusStyles[issue.status]?.label || issue.status}
                                                 </Badge>
                                             </div>
-                                            
                                         </div>
                                     </motion.li>
                                 ))}
