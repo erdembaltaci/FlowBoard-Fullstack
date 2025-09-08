@@ -82,11 +82,7 @@ namespace JiraProject.WebAPI.Controllers
 
             return Ok(new { message = "Kullanıcı rolü başarıyla değiştirildi." });
         }
-
-        // ---------------------------------------------------------------------
-        // DİĞER METOTLAR (Eğer bir admin paneli yapmayacaksanız gereksiz olabilir)
-        // ---------------------------------------------------------------------
-
+        
         /// <summary>
         /// Tüm kullanıcıları listeler.
         /// </summary>
