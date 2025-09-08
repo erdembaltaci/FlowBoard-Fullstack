@@ -23,6 +23,15 @@ function ProjectsListPage() {
     const [projectToDelete, setProjectToDelete] = useState(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
+    useEffect(() => {
+        if (!isModalOpen) {
+            const timer = setTimeout(() => {
+                setProjectToEdit(null);
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [isModalOpen]);
+
     const fetchProjects = async () => {
         setLoading(true);
         try {
@@ -68,15 +77,8 @@ function ProjectsListPage() {
         }
     };
     
-    // --- DEĞİŞİKLİK BURADA ---
     const closeModal = () => {
-        setIsModalOpen(false); // Önce modal'ı kapatma işlemini başlat.
-
-        // Kapanma animasyonunun bitmesine zaman tanımak için
-        // düzenleme durumunu küçük bir gecikmeyle sıfırla.
-        setTimeout(() => {
-            setProjectToEdit(null);
-        }, 200); // 200 milisaniye genellikle yeterlidir.
+        setIsModalOpen(false);
     };
     
     const handleSaveProject = async (projectData) => {
