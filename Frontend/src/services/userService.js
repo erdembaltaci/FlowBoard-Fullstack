@@ -23,24 +23,15 @@ export const userService = {
     getMyProfile: () => api.get('/users/me'),
     // src/services/userService.js
 
-    updateMyProfile : (profileData) => {
-        const formData = new FormData();
-    
-    // Anahtarları backend'in beklediği PascalCase formatında manuel olarak ekliyoruz.
-        formData.append('FirstName', profileData.firstName);
-        formData.append('LastName', profileData.lastName);
-        formData.append('Username', profileData.username);
-        formData.append('Email', profileData.email);
-
-    // Eğer yeni bir profil fotoğrafı seçilmişse, onu da ekle
-        if (profileData.profilePicture) {
-            formData.append('ProfilePicture', profileData.profilePicture);
-        }
-
-        return api.put('/users/me', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
+    updateMyProfile: (profileData) => {
+        return api.put('/users/me', {
+          firstName: profileData.firstName,
+          lastName: profileData.lastName,
+          username: profileData.username,
+          email: profileData.email,
         });
-    },
+      },
+    
     changeMyPassword: (dto) => api.post('/users/me/change-password', dto),
     searchUsers: (searchTerm) => {
         return api.get(`/users/search?query=${searchTerm}`);
