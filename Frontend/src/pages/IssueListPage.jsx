@@ -92,7 +92,7 @@ function IssueListPage() {
                 </div>
                 <div className="flex items-center gap-4">
                     <Button onClick={() => navigate(`/project/${projectId}/board`)} variant="outline" className="text-purple-400 border-purple-400/50 hover:bg-purple-400/10 hover:text-purple-300 transition-colors">
-                        Panoyu Görüntüle
+                        Görev Panosunu Görüntüle
                     </Button>
                     <Button onClick={() => setIsModalOpen(true)} className="bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/30">
                         <Plus size={16} className="mr-2" /> Yeni Görev Ekle
