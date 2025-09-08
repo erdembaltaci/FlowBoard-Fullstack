@@ -42,7 +42,7 @@ function App() {
   useEffect(() => {
     const interval = setInterval(() => {
       // ÖNEMLİ: Bu URL'yi kendi Render backend adresinizle değiştirmeyi unutmayın!
-      fetch("https://flowboard-backend.onrender.com/health")
+      fetch("https://flowboard-fullstack.onrender.com/health")
         .then((res) => console.log("Sunucuya ping gönderildi:", res.status))
         .catch((err) => console.error("Sunucuya ping gönderilemedi:", err));
     }, 14 * 60 * 1000);
