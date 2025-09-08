@@ -67,10 +67,16 @@ function ProjectsListPage() {
             setProjectToDelete(null);
         }
     };
-
+    
+    // --- DEĞİŞİKLİK BURADA ---
     const closeModal = () => {
-        setIsModalOpen(false);
-        setProjectToEdit(null);
+        setIsModalOpen(false); // Önce modal'ı kapatma işlemini başlat.
+
+        // Kapanma animasyonunun bitmesine zaman tanımak için
+        // düzenleme durumunu küçük bir gecikmeyle sıfırla.
+        setTimeout(() => {
+            setProjectToEdit(null);
+        }, 200); // 200 milisaniye genellikle yeterlidir.
     };
     
     const handleSaveProject = async (projectData) => {
@@ -142,8 +148,6 @@ function ProjectsListPage() {
                         return (
                             <motion.div key={project.id} variants={itemVariants} className="relative group">
                                 {user && user.role === 'TeamLead' && (
-                                    // --- DEĞİŞİKLİK BURADA ---
-                                    // 'opacity-0 group-hover:opacity-100' sınıfları kaldırıldı.
                                     <div className="absolute top-2 right-2 z-20">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
