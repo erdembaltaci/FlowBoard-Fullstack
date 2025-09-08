@@ -84,8 +84,6 @@ namespace JiraProject.Business.Concrete
             }
         }
 
-        // 👇 EKSİK OLAN VE DOLDURULAN METOTLAR 👇
-
         public async Task<IEnumerable<TeamDto>> GetTeamsForUserAsync(int currentUserId)
         {
             var teams = await _teamRepository.FindWithIncludesAsync(
