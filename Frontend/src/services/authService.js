@@ -23,6 +23,7 @@ export const authService = {
         });
     },
 
+    // --- YENİ EKLENEN FONKSİYON ---
     refreshToken: () => {
         // Bu istek, apiService interceptor'ı sayesinde mevcut (artık eski olan)
         // token ile gönderilir ve karşılığında yeni, güncel bir token alır.
@@ -37,4 +38,3 @@ export const authService = {
         return api.post('/auth/reset-password', resetDto);
     }
 };
-
