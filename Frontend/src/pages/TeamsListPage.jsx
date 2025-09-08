@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { teamService } from '../services/teamService';
+import { authService } from '../services/authService'; // authService'i import ediyoruz
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,7 +18,7 @@ const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, trans
 const itemVariants = { hidden: { opacity: 0, scale: 0.95, y: 20 }, visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } } };
 
 function TeamsListPage() {
-    const { user } = useAuth();
+    const { user, login } = useAuth(); // AuthContext'ten login fonksiyonunu alıyoruz
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,12 +26,11 @@ function TeamsListPage() {
     const [teamToDelete, setTeamToDelete] = useState(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
-    // Bu useEffect, modal kapandığında çalışacak ve düzenleme durumunu güvenli bir şekilde sıfırlayacak.
     useEffect(() => {
         if (!isModalOpen) {
             const timer = setTimeout(() => {
                 setTeamToEdit(null);
-            }, 300); // 300ms, çoğu animasyon için güvenli bir süredir.
+            }, 300);
             return () => clearTimeout(timer);
         }
     }, [isModalOpen]);
@@ -58,8 +58,19 @@ function TeamsListPage() {
                 await teamService.updateTeam(teamData.id, { name: teamData.name });
                 toast.success("Takım başarıyla güncellendi.");
             } else {
+                // 1. ADIM: Takımı oluştur
                 await teamService.createTeam({ name: teamData.name, teamLeadId: user.id });
-                toast.success("Takım başarıyla oluşturuldu.");
+                toast.success("Takım başarıyla oluşturuldu. Oturumunuz güncelleniyor...");
+
+                // --- EN KRİTİK DEĞİŞİKLİK BURADA ---
+                // 2. ADIM: Rolünüz değiştiği için, backend'den yeni ve güncel bir token talep et.
+                const response = await authService.refreshToken();
+                const newToken = response.data.token;
+
+                // 3. ADIM: Gelen yeni token ile AuthContext'i ve localStorage'ı güncelle.
+                if (newToken) {
+                    await login(newToken);
+                }
             }
             closeModal();
             fetchTeams();
