@@ -36,7 +36,7 @@ namespace JiraProject.WebAPI.Controllers
         /// O an giriş yapmış kullanıcının profil bilgilerini günceller.
         /// </summary>
         [HttpPut("me")] // Rota: PUT /api/users/me
-        public async Task<IActionResult> UpdateMyProfile([FromForm] UserUpdateDto dto)
+        public async Task<IActionResult> UpdateMyProfile([FromBody] UserUpdateDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
