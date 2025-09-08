@@ -27,7 +27,7 @@ public class AuthController : ControllerBase
     [HttpPost("user-register")]
     public async Task<IActionResult> Register([FromForm] UserCreateDto userCreateDto)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState); 
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         var createdUser = await _userService.CreateUserAsync(userCreateDto);
         return Ok(createdUser);
     }
@@ -36,14 +36,11 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] UserLoginDto userLoginDto)
     {
         var userDto = await _userService.LoginAsync(userLoginDto.Email, userLoginDto.Password);
-
         if (userDto == null)
         {
             return Unauthorized("Geçersiz e-posta veya şifre.");
         }
-
         var token = GenerateJwtToken(userDto);
-
         return Ok(new { token, user = userDto });
     }
 
@@ -77,6 +74,7 @@ public class AuthController : ControllerBase
             // CreatedAt gibi diğer alanlar token için gerekli değil
         };
 
+        // En güncel bilgilerle yeni bir token üretiyoruz.
         var newToken = GenerateJwtToken(userDtoForToken);
         return Ok(new { token = newToken });
     }
@@ -94,12 +92,10 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-
         await _userService.ResetPasswordAsync(dto);
         return Ok(new { message = "Şifreniz başarıyla güncellendi. Şimdi giriş yapabilirsiniz." });
     }
 
-    // === TOKEN ÜRETEN YARDIMCI METOT  ===
     private string GenerateJwtToken(UserDto userDto)
     {
         var claims = new List<Claim>
@@ -119,9 +115,7 @@ public class AuthController : ControllerBase
             Expires = expires,
             SigningCredentials = creds,
             Issuer = _configuration["Jwt:Issuer"],
-            Audience = _configuration["Jwt:Audience"],
-            NotBefore = DateTime.UtcNow,
-            IssuedAt = DateTime.UtcNow
+            Audience = _configuration["Jwt:Audience"]
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();
