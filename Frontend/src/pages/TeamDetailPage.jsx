@@ -200,20 +200,12 @@ function TeamDetailPage() {
                                     {isTeamLead && user.id !== member.id && (
                                         <div className="flex items-center gap-2 self-end sm:self-center">
                                             <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleChangeRoleClick(member)}
-                                                className="border-slate-600 bg-transparent text-slate-400 hover:bg-slate-700 hover:text-white transition-all duration-200"
-                                            >
-                                                Rol Değiştir
-                                            </Button>
-                                            <Button
                                                 variant="ghost"
                                                 size="sm"
                                                 className="text-red-400 hover:bg-red-500/10 hover:text-red-300"
                                                 onClick={() => openConfirmationModal(member)}
                                             >
-                                                Çıkar
+                                                Takımdan Çıkar
                                             </Button>
                                         </div>
                                     )}
