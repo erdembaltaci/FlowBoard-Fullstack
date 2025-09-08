@@ -115,9 +115,6 @@ namespace JiraProject.Business.Concrete
 
         public async Task<IEnumerable<IssueDto>> GetIssuesByTeamIdAsync(int teamId)
         {
-            // FilterIssuesAsync, TeamId'ye göre filtreleme yapmadığı için bu metot şimdilik
-            // doğru çalışmayacaktır. FilterIssuesAsync'e TeamId filtresi eklenmesi gerekir.
-            // Şimdilik NotImplemented olarak bırakmak en doğrusu.
             throw new System.NotImplementedException("Takıma göre görev getirme henüz implemente edilmedi.");
         }
 
