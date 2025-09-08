@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Camera, File as FileIcon } from 'lucide-react';
 import { userService } from '../services/userService';
+import { authService } from '../services/authService'; // authService'i de import ediyoruz
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -15,51 +16,61 @@ import { fileUrl } from "../lib/fileUrl";
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }};
 
 function ProfilePage() {
-    const { user, refreshUser } = useAuth();
+    const { user, refreshUser } = useAuth(); // AuthContext'ten refreshUser'ı alıyoruz
     const [profile, setProfile] = useState(null);
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '' });
     const [isProfileLoading, setIsProfileLoading] = useState(false);
     const [isPasswordLoading, setIsPasswordLoading] = useState(false);
-    const [profilePicture, setProfilePicture] = useState(null);
+    const [newProfilePicture, setNewProfilePicture] = useState(null); // Yeni dosya state'i
     const [previewUrl, setPreviewUrl] = useState(null);
     const fileInputRef = useRef(null);
 
     useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const res = await userService.getMyProfile();
-                setProfile(res.data);
-                if (res.data.avatarUrl) {
-                    setPreviewUrl(fileUrl(res.data.avatarUrl));
-                }
-            } catch {
-                toast.error("Profil bilgileri yüklenemedi.");
+        // Sayfa ilk yüklendiğinde, AuthContext'ten gelen güncel kullanıcı verisini kullanıyoruz.
+        // Bu, gereksiz API isteğini engeller.
+        if (user) {
+            setProfile(user);
+            if (user.avatarUrl) {
+                setPreviewUrl(fileUrl(user.avatarUrl));
             }
-        };
-        fetchProfile();
-    }, []);
+        }
+    }, [user]); // user değiştiğinde (örneğin refreshUser sonrası) profile state'ini güncelle
     
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setProfilePicture(file);
-            setPreviewUrl(URL.createObjectURL(file)); // geçici preview
+            setNewProfilePicture(file);
+            // Kullanıcının seçtiği yeni resmi anında önizlemede göster
+            setPreviewUrl(URL.createObjectURL(file)); 
         }
     };
     
+    // --- EN KRİTİK DEĞİŞİKLİK BURADA ---
     const handleProfileSave = async (e) => {
         e.preventDefault();
         setIsProfileLoading(true);
         try {
+            // 1. ADIM: Eğer yeni bir fotoğraf seçilmişse, ÖNCE onu yükle.
+            // Bu, authService içindeki uploadAvatar fonksiyonunu çağırır.
+            if (newProfilePicture) {
+                await authService.uploadAvatar(newProfilePicture);
+                toast.success("Profil fotoğrafı başarıyla güncellendi!");
+            }
+
+            // 2. ADIM: Metin tabanlı verileri güncelle.
+            // Bu, userService içindeki updateMyProfile fonksiyonunu çağırır.
             await userService.updateMyProfile({ 
                 firstName: profile.firstName, 
                 lastName: profile.lastName,
                 email: profile.email,
-                username: profile.username,
-                profilePicture: profilePicture
+                username: profile.username
             });
-            toast.success("Profil başarıyla güncellendi.");
+            toast.success("Profil bilgileri başarıyla güncellendi!");
+
+            // 3. ADIM: Tüm güncellemeler bittikten sonra, arayüzdeki kullanıcı
+            // bilgisini (yeni avatar dahil) tazelemek için refreshUser'ı çağır.
             await refreshUser();
+
         } catch (error) {
             toast.error(error.response?.data?.error || "Profil güncellenemedi.");
         } finally {
@@ -104,8 +115,6 @@ function ProfilePage() {
                                 <Avatar className="w-32 h-32 text-4xl border-2 border-slate-600">
                                     {previewUrl ? (
                                         <AvatarImage src={previewUrl} alt={profile.firstName} />
-                                    ) : profile.avatarUrl ? (
-                                        <AvatarImage src={fileUrl(profile.avatarUrl)} alt={profile.firstName} />
                                     ) : (
                                         <AvatarFallback className="bg-slate-700">
                                             {profile.firstName?.charAt(0)}{profile.lastName?.charAt(0)}
