@@ -15,7 +15,6 @@ import { fileUrl } from "../lib/fileUrl";
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants = { hidden: { opacity: 0, scale: 0.95, y: 20 }, visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } } };
-const API_URL = import.meta.env.VITE_API_URL;
 
 function TeamsListPage() {
     const { user } = useAuth();
@@ -126,7 +125,6 @@ function TeamsListPage() {
                     </Link>
                     <h1 className="text-4xl font-extrabold tracking-tight">Takımlarım</h1>
                 </div>
-                {/* DÜZELTME: Artık herhangi bir kullanıcı (rolü ne olursa olsun) takım oluşturabilir */}
                 <Button onClick={openCreateModal} className="bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/30">
                     <Plus size={16} className="mr-2" />
                     Yeni Takım Oluştur
@@ -141,7 +139,9 @@ function TeamsListPage() {
                     {teams.map(team => (
                         <motion.div key={team.id} variants={itemVariants} className="relative group">
                              {user && user.id === team.teamLead?.id && (
-                                <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                                // --- DEĞİŞİKLİK BURADA ---
+                                // 'opacity-0 group-hover:opacity-100' sınıfları kaldırıldı.
+                                <div className="absolute top-2 right-2 z-20">
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-slate-800/70 hover:bg-slate-700">
@@ -172,23 +172,19 @@ function TeamsListPage() {
                                         <div className="mt-4">
                                             <p className="text-sm text-slate-500 mb-2">{team.members.length} üye</p>
                                             <div className="flex items-center">
-                                                {team.members.slice(0, 5).map(member => {
-                                                    console.log("Avatar URL:", fileUrl(member.avatarUrl)); // ✅ debug log
-
-                                                    return (
-                                                        <Avatar key={member.id} className="h-8 w-8 border-2 border-slate-900 -ml-2 first:ml-0">
-                                                            {member.avatarUrl ? (
-                                                                <AvatarImage src={fileUrl(member.avatarUrl)} alt={member.fullName} />
-                                                            ) : (
-                                                                <AvatarFallback className="bg-slate-700 text-xs">
-                                                                    {member.fullName?.charAt(0).toUpperCase() || "?"}
-                                                                </AvatarFallback>
-                                                            )}
-                                                        </Avatar>
-                                                    );
-                                                })}
+                                                {team.members.slice(0, 5).map(member => (
+                                                    <Avatar key={member.id} className="h-8 w-8 border-2 border-slate-900 -ml-2 first:ml-0">
+                                                        {member.avatarUrl ? (
+                                                            <AvatarImage src={fileUrl(member.avatarUrl)} alt={member.fullName} />
+                                                        ) : (
+                                                            <AvatarFallback className="bg-slate-700 text-xs">
+                                                                {member.fullName?.charAt(0).toUpperCase() || "?"}
+                                                            </AvatarFallback>
+                                                        )}
+                                                    </Avatar>
+                                                ))}
                                                 {team.members.length > 5 && (
-                                                     <div className="h-8 w-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-semibold border-2 border-slate-900 -ml-2">
+                                                    <div className="h-8 w-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-semibold border-2 border-slate-900 -ml-2">
                                                         +{team.members.length - 5}
                                                     </div>
                                                 )}
