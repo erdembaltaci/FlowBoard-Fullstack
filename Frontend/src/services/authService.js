@@ -7,9 +7,6 @@ export const authService = {
     register: (userData) => {
         const formData = new FormData();
         
-        // --- EN KRİTİK DEĞİŞİKLİK BURADA ---
-        // Artık formdaki 'firstName' ve 'lastName' alanlarını,
-        // backend'in beklediği 'FirstName' ve 'LastName' anahtarlarıyla doğru bir şekilde gönderiyoruz.
         formData.append('FirstName', userData.firstName);
         formData.append('LastName', userData.lastName);
         formData.append('Username', userData.username);
@@ -33,8 +30,6 @@ export const authService = {
         const formData = new FormData();
         formData.append('avatar', avatarFile);
 
-        // DEĞİŞİKLİK: Manuel token eklemeye gerek yok.
-        // Bu istek, apiService interceptor'ı sayesinde token'ı otomatik olarak alır.
         return api.post('/uploads/avatar', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
