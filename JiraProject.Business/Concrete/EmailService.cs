@@ -1,4 +1,3 @@
-﻿// JiraProject.Business/Concrete/EmailService.cs
 using JiraProject.Business.Abstract;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Options;
@@ -6,7 +5,7 @@ using MimeKit;
 using System.Net.Mail;
 using System.Threading.Tasks;
 
-public class SmtpSettings // Bu sınıfı da aynı dosyaya veya ayrı bir dosyaya ekleyebilirsiniz.
+public class SmtpSettings 
 {
     public string Server { get; set; } = null!;
     public int Port { get; set; }
