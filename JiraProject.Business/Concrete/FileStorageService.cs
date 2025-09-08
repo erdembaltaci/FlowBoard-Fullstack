@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 public class FileStorageService
 {
-    // Dosyaları wwwroot/avatars klasörüne kaydedeceğiz
     private readonly string _storagePath = Path.Combine("wwwroot", "avatars");
 
     public async Task<string> SaveFileAsync(IFormFile file)
