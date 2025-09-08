@@ -25,6 +25,16 @@ function TeamsListPage() {
     const [teamToDelete, setTeamToDelete] = useState(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
+    // Bu useEffect, modal kapandığında çalışacak ve düzenleme durumunu güvenli bir şekilde sıfırlayacak.
+    useEffect(() => {
+        if (!isModalOpen) {
+            const timer = setTimeout(() => {
+                setTeamToEdit(null);
+            }, 300); // 300ms, çoğu animasyon için güvenli bir süredir.
+            return () => clearTimeout(timer);
+        }
+    }, [isModalOpen]);
+
     const fetchTeams = async () => {
         setLoading(true);
         try {
@@ -86,16 +96,9 @@ function TeamsListPage() {
             setTeamToDelete(null);
         }
     };
-
-    // --- DEĞİŞİKLİK BURADA ---
+    
     const closeModal = () => {
-        setIsModalOpen(false); // Önce modal'ı kapatma işlemini başlat.
-        
-        // Kapanma animasyonunun bitmesine zaman tanımak için
-        // düzenleme durumunu küçük bir gecikmeyle sıfırla.
-        setTimeout(() => {
-            setTeamToEdit(null);
-        }, 200); // 200 milisaniye genellikle yeterlidir.
+        setIsModalOpen(false);
     };
 
     if (loading) return <div className="p-8 text-center text-slate-400">Takımlar Yükleniyor...</div>;
