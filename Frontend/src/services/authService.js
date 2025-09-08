@@ -6,13 +6,11 @@ export const authService = {
      */
     register: (userData) => {
         const formData = new FormData();
-        
         formData.append('FirstName', userData.firstName);
         formData.append('LastName', userData.lastName);
         formData.append('Username', userData.username);
         formData.append('Email', userData.email);
         formData.append('Password', userData.password);
-
         return api.post('/auth/user-register', formData);
     },
 
@@ -25,21 +23,18 @@ export const authService = {
 
     /**
      * Kullanıcının avatarını yükler.
+     * @param {File} avatarFile - Yüklenecek dosya.
+     * @param {string} token - Login işleminden hemen sonra alınan taze token.
      */
-    uploadAvatar: (avatarFile) => {
+    uploadAvatar: (avatarFile, token) => {
         const formData = new FormData();
         formData.append('avatar', avatarFile);
 
         return api.post('/uploads/avatar', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${token}`
+            },
         });
     },
-
-    forgotPassword: (email) => {
-        return api.post('/auth/forgot-password', { email });
-    },
-
-    resetPassword: (resetDto) => {
-        return api.post('/auth/reset-password', resetDto);
-    }
 };
