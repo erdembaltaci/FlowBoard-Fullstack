@@ -27,13 +27,8 @@ public class AuthController : ControllerBase
     [HttpPost("user-register")]
     public async Task<IActionResult> Register([FromForm] UserCreateDto userCreateDto)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-    
+        if (!ModelState.IsValid) return BadRequest(ModelState); 
         var createdUser = await _userService.CreateUserAsync(userCreateDto);
-
-        // DÜZELTME: Avatar URL'si artık Cloudinary'den tam olarak geldiği için,
-        // burada URL'yi manipüle etmeye gerek yoktur. Bu blok kaldırıldı.
-
         return Ok(createdUser);
     }
 
@@ -46,9 +41,6 @@ public class AuthController : ControllerBase
         {
             return Unauthorized("Geçersiz e-posta veya şifre.");
         }
-        
-        // DÜZELTME: Avatar URL'si artık Cloudinary'den tam olarak geldiği için,
-        // burada URL'yi manipüle etmeye gerek yoktur. Bu blok kaldırıldı.
 
         var token = GenerateJwtToken(userDto);
 
@@ -85,7 +77,6 @@ public class AuthController : ControllerBase
             // CreatedAt gibi diğer alanlar token için gerekli değil
         };
 
-        // En güncel bilgilerle yeni bir token üretiyoruz.
         var newToken = GenerateJwtToken(userDtoForToken);
         return Ok(new { token = newToken });
     }
@@ -108,7 +99,7 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Şifreniz başarıyla güncellendi. Şimdi giriş yapabilirsiniz." });
     }
 
-    // === TOKEN ÜRETEN YARDIMCI METOT (NİHAİ HALİ) ===
+    // === TOKEN ÜRETEN YARDIMCI METOT  ===
     private string GenerateJwtToken(UserDto userDto)
     {
         var claims = new List<Claim>
