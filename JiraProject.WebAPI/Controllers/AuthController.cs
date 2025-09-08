@@ -23,10 +23,38 @@ public class AuthController : ControllerBase
         _userService = userService;
         _configuration = configuration;
     }
+    
+    [HttpPost("user-register")]
+    public async Task<IActionResult> Register([FromForm] UserCreateDto userCreateDto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+    
+        var createdUser = await _userService.CreateUserAsync(userCreateDto);
 
-    // ... (Register, Login, ve diğer metotlarınız aynı kalır) ...
+        // DÜZELTME: Avatar URL'si artık Cloudinary'den tam olarak geldiği için,
+        // burada URL'yi manipüle etmeye gerek yoktur. Bu blok kaldırıldı.
 
-    // --- YENİ EKLENEN METOT BURADA ---
+        return Ok(createdUser);
+    }
+
+    [HttpPost("user-login")]
+    public async Task<IActionResult> Login([FromBody] UserLoginDto userLoginDto)
+    {
+        var userDto = await _userService.LoginAsync(userLoginDto.Email, userLoginDto.Password);
+
+        if (userDto == null)
+        {
+            return Unauthorized("Geçersiz e-posta veya şifre.");
+        }
+        
+        // DÜZELTME: Avatar URL'si artık Cloudinary'den tam olarak geldiği için,
+        // burada URL'yi manipüle etmeye gerek yoktur. Bu blok kaldırıldı.
+
+        var token = GenerateJwtToken(userDto);
+
+        return Ok(new { token, user = userDto });
+    }
+
     /// <summary>
     /// Kullanıcının en güncel bilgileriyle (örn: rol değişikliği sonrası) yeni bir token üretir.
     /// </summary>
@@ -54,6 +82,7 @@ public class AuthController : ControllerBase
             Username = userProfile.Username,
             Role = userProfile.Role,
             Email = userProfile.Email
+            // CreatedAt gibi diğer alanlar token için gerekli değil
         };
 
         // En güncel bilgilerle yeni bir token üretiyoruz.
@@ -61,6 +90,25 @@ public class AuthController : ControllerBase
         return Ok(new { token = newToken });
     }
 
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    {
+        await _userService.RequestPasswordResetAsync(dto.Email);
+        return Ok(new { message = "Eğer bu e-posta adresi sistemimizde kayıtlıysa, şifre sıfırlama linki gönderilmiştir." });
+    }
+
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        await _userService.ResetPasswordAsync(dto);
+        return Ok(new { message = "Şifreniz başarıyla güncellendi. Şimdi giriş yapabilirsiniz." });
+    }
+
+    // === TOKEN ÜRETEN YARDIMCI METOT (NİHAİ HALİ) ===
     private string GenerateJwtToken(UserDto userDto)
     {
         var claims = new List<Claim>
@@ -80,7 +128,9 @@ public class AuthController : ControllerBase
             Expires = expires,
             SigningCredentials = creds,
             Issuer = _configuration["Jwt:Issuer"],
-            Audience = _configuration["Jwt:Audience"]
+            Audience = _configuration["Jwt:Audience"],
+            NotBefore = DateTime.UtcNow,
+            IssuedAt = DateTime.UtcNow
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();
