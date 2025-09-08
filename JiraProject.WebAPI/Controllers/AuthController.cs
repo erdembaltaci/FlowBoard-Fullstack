@@ -23,26 +23,8 @@ public class AuthController : ControllerBase
         _userService = userService;
         _configuration = configuration;
     }
-    
-    [HttpPost("user-register")]
-    public async Task<IActionResult> Register([FromForm] UserCreateDto userCreateDto)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        var createdUser = await _userService.CreateUserAsync(userCreateDto);
-        return Ok(createdUser);
-    }
 
-    [HttpPost("user-login")]
-    public async Task<IActionResult> Login([FromBody] UserLoginDto userLoginDto)
-    {
-        var userDto = await _userService.LoginAsync(userLoginDto.Email, userLoginDto.Password);
-        if (userDto == null)
-        {
-            return Unauthorized("Geçersiz e-posta veya şifre.");
-        }
-        var token = GenerateJwtToken(userDto);
-        return Ok(new { token, user = userDto });
-    }
+    // ... (Register, Login, ve diğer metotlarınız aynı kalır) ...
 
     // --- YENİ EKLENEN METOT BURADA ---
     /// <summary>
@@ -79,23 +61,6 @@ public class AuthController : ControllerBase
         return Ok(new { token = newToken });
     }
 
-    [HttpPost("forgot-password")]
-    [AllowAnonymous]
-    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
-    {
-        await _userService.RequestPasswordResetAsync(dto.Email);
-        return Ok(new { message = "Eğer bu e-posta adresi sistemimizde kayıtlıysa, şifre sıfırlama linki gönderilmiştir." });
-    }
-
-    [HttpPost("reset-password")]
-    [AllowAnonymous]
-    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
-    {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
-        await _userService.ResetPasswordAsync(dto);
-        return Ok(new { message = "Şifreniz başarıyla güncellendi. Şimdi giriş yapabilirsiniz." });
-    }
-
     private string GenerateJwtToken(UserDto userDto)
     {
         var claims = new List<Claim>
@@ -123,4 +88,3 @@ public class AuthController : ControllerBase
         return tokenHandler.WriteToken(token);
     }
 }
-
