@@ -74,10 +74,6 @@ namespace JiraProject.Business.Concrete
         public async Task<ProjectDto> GetProjectByIdAsync(int id, int currentUserId)
         {
             // KURAL: Kullanıcı, sadece üyesi olduğu bir projenin detayını görebilir.
-
-            // String tabanlı "magic string" yerine Include/ThenInclude zinciri daha güvenilirdir.
-            // Ancak sizin GenericRepository yapınız string aldığı için bu şekilde bırakıyoruz.
-            // Bu string'in entity'lerinizdeki property isimleriyle tam eşleştiğinden emin olun.
             var project = await _projectRepository.GetByIdWithIncludesAsync(id, "Team.UserTeams.User");
 
             // Yetki Kontrolü
