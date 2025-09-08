@@ -28,12 +28,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register([FromForm] UserCreateDto userCreateDto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-    
         var createdUser = await _userService.CreateUserAsync(userCreateDto);
-
-        // DÜZELTME: Avatar URL'si artık Cloudinary'den tam olarak geldiği için,
-        // burada URL'yi manipüle etmeye gerek yoktur. Bu blok kaldırıldı.
-
         return Ok(createdUser);
     }
 
@@ -41,18 +36,47 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] UserLoginDto userLoginDto)
     {
         var userDto = await _userService.LoginAsync(userLoginDto.Email, userLoginDto.Password);
-
         if (userDto == null)
         {
             return Unauthorized("Geçersiz e-posta veya şifre.");
         }
-        
-        // DÜZELTME: Avatar URL'si artık Cloudinary'den tam olarak geldiği için,
-        // burada URL'yi manipüle etmeye gerek yoktur. Bu blok kaldırıldı.
-
         var token = GenerateJwtToken(userDto);
-
         return Ok(new { token, user = userDto });
+    }
+
+    // --- YENİ EKLENEN METOT BURADA ---
+    /// <summary>
+    /// Kullanıcının en güncel bilgileriyle (örn: rol değişikliği sonrası) yeni bir token üretir.
+    /// </summary>
+    [HttpPost("refresh-token")]
+    [Authorize] // Sadece giriş yapmış kullanıcılar bu isteği atabilir
+    public async Task<IActionResult> RefreshToken()
+    {
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized("Geçersiz token.");
+        }
+
+        // IUserService'teki GetUserByIdAsync'nin UserProfileDto döndürdüğünü varsayıyoruz.
+        // Bu DTO'dan token için gerekli olan UserDto'yu oluşturuyoruz.
+        var userProfile = await _userService.GetUserByIdAsync(int.Parse(userIdString));
+        if (userProfile == null)
+        {
+            return Unauthorized("Kullanıcı bulunamadı.");
+        }
+        
+        var userDtoForToken = new UserDto
+        {
+            Id = userProfile.Id,
+            Username = userProfile.Username,
+            Role = userProfile.Role,
+            Email = userProfile.Email
+        };
+
+        // En güncel bilgilerle yeni bir token üretiyoruz.
+        var newToken = GenerateJwtToken(userDtoForToken);
+        return Ok(new { token = newToken });
     }
 
     [HttpPost("forgot-password")]
@@ -68,12 +92,10 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-
         await _userService.ResetPasswordAsync(dto);
         return Ok(new { message = "Şifreniz başarıyla güncellendi. Şimdi giriş yapabilirsiniz." });
     }
 
-    // === TOKEN ÜRETEN YARDIMCI METOT (NİHAİ HALİ) ===
     private string GenerateJwtToken(UserDto userDto)
     {
         var claims = new List<Claim>
@@ -85,19 +107,15 @@ public class AuthController : ControllerBase
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        // 'DateTime.Now' yerine her zaman 'DateTime.UtcNow' kullanmak, sunucu saat farkı sorunlarını engeller.
         var expires = DateTime.UtcNow.AddDays(Convert.ToDouble(_configuration["Jwt:ExpireDays"]));
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = expires, // Bitiş zamanı
+            Expires = expires,
             SigningCredentials = creds,
             Issuer = _configuration["Jwt:Issuer"],
-            Audience = _configuration["Jwt:Audience"],
-            NotBefore = DateTime.UtcNow,
-            IssuedAt = DateTime.UtcNow
+            Audience = _configuration["Jwt:Audience"]
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -105,3 +123,4 @@ public class AuthController : ControllerBase
         return tokenHandler.WriteToken(token);
     }
 }
+
