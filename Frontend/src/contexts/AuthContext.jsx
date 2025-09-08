@@ -59,7 +59,6 @@ export const AuthProvider = ({ children }) => {
         initializeAuth();
     }, [refreshUser, logout]);
 
-    // --- EN KRİTİK DEĞİŞİKLİK BURADA ---
     const login = async (token) => {
         localStorage.setItem('authToken', token);
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
